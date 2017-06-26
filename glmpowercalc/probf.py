@@ -32,18 +32,19 @@ def probf(fcrit, df1, df2, noncen):
         (df1 < 10**6 
          and df2 < 10 
          and noncen < 10**6)):
-        fmethod, prob = nonadjusted(df1, df2, fcrit, noncen)
+        fmethod, prob = _nonadjusted(df1, df2, fcrit, noncen)
     elif (1 <= df1 < 10**9.2 
           and 10 ** 0.6 <= df2 < 10**9.2
           and noncen < 10**6.4):
-        fmethod, prob = tiku_approximation(df1, df2, fcrit, noncen)
+        fmethod, prob = _tiku_approximation(df1, df2, fcrit, noncen)
     else:
-        zscore = get_zscore(df1, df2, fcrit, noncen)
-        fmethod, prob = get_normal_approximation(zscore)
+        zscore = _get_zscore(df1, df2, fcrit, noncen)
+        fmethod, prob = _get_normal_approximation(zscore)
     return prob, fmethod
 
 
-def get_normal_approximation(zscore):
+def _get_normal_approximation(zscore):
+    """Normal approximation"""
     if math.fabs(zscore) < 6:
         fmethod = 3
         prob = norm.cdf(zscore)
@@ -56,7 +57,8 @@ def get_normal_approximation(zscore):
     return fmethod, prob
 
 
-def get_zscore(df1, df2, fcrit, noncen):
+def _get_zscore(df1, df2, fcrit, noncen):
+    """Calculate zscore for Normal approximation"""
     p1 = 1 / 3
     p2 = -2
     p3 = 1 / 2
@@ -70,13 +72,8 @@ def get_zscore(df1, df2, fcrit, noncen):
     return zscore
 
 
-def nonadjusted(df1, df2, fcrit, noncen):
-    prob = special.ncfdtr(df1, df2, noncen, fcrit)
-    fmethod = 1
-    return fmethod, prob
-
-
-def tiku_approximation(df1, df2, fcrit, noncen):
+def _tiku_approximation(df1, df2, fcrit, noncen):
+    """Tiku approximation (best approximation)"""
     h_tiku = 2 * (df1 + noncen)**3 + 3 * (df1 + noncen) * (df1 + 2 * noncen) * (df2 - 2) + (df1 + 3 * noncen) * (df2 - 2)**2
     k_tiku = (df1 + noncen)**2 + (df2 - 2) * (df1 + 2 * noncen)
     df1_tiku = math.floor(0.5 * (df2 - 2) * ((h_tiku**2 / (h_tiku**2 - 4 * k_tiku**3))**0.5 - 1))
@@ -85,4 +82,11 @@ def tiku_approximation(df1, df2, fcrit, noncen):
     fcrit_tiku = (fcrit - b_tiku) / c_tiku
     prob = special.ncfdtr(df1_tiku, df2, 0, fcrit_tiku)
     fmethod = 2
+    return fmethod, prob
+
+
+def _nonadjusted(df1, df2, fcrit, noncen):
+    """CDF function (no approximation)"""
+    prob = special.ncfdtr(df1, df2, noncen, fcrit)
+    fmethod = 1
     return fmethod, prob
