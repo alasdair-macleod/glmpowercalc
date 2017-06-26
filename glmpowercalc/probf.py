@@ -39,12 +39,12 @@ def probf(fcrit, df1, df2, noncen):
         fmethod, prob = _tiku_approximation(df1, df2, fcrit, noncen)
     else:
         zscore = _get_zscore(df1, df2, fcrit, noncen)
-        fmethod, prob = _get_normal_approximation(zscore)
+        fmethod, prob = _normal_approximation(zscore)
     return prob, fmethod
 
 
-def _get_normal_approximation(zscore):
-    """Normal approximation"""
+def _normal_approximation(zscore):
+    """Normal approximation, value dependent on zscore"""
     if math.fabs(zscore) < 6:
         fmethod = 3
         prob = norm.cdf(zscore)
