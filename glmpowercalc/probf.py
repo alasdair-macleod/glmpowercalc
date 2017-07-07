@@ -2,6 +2,7 @@ from scipy import special
 from scipy.stats import norm
 import math
 
+
 def probf(fcrit, df1, df2, noncen):
     """PROBF calculates Pr(FCRIT < F(df1,df2,noncen)) using one of four
        methods. The first, most common method uses the cumulative
@@ -25,21 +26,21 @@ def probf(fcrit, df1, df2, noncen):
                        but power is almost certainly zero or one)
                =5, Power missing
     """
-    if ((df1 < 10**4.4 
-         and df2 < 10**5.4 
+    if ((df1 < 10**4.4
+         and df2 < 10**5.4
          and noncen < 10**6.4)
         or
-        (df1 < 10**6 
-         and df2 < 10 
+        (df1 < 10**6
+         and df2 < 10
          and noncen < 10**6)):
-        fmethod, prob = _nonadjusted(df1, df2, fcrit, noncen)
-    elif (1 <= df1 < 10**9.2 
+        prob, fmethod = _nonadjusted(df1, df2, fcrit, noncen)
+    elif (1 <= df1 < 10**9.2
           and 10 ** 0.6 <= df2 < 10**9.2
           and noncen < 10**6.4):
-        fmethod, prob = _tiku_approximation(df1, df2, fcrit, noncen)
+        prob, fmethod = _tiku_approximation(df1, df2, fcrit, noncen)
     else:
         zscore = _get_zscore(df1, df2, fcrit, noncen)
-        fmethod, prob = _normal_approximation(zscore)
+        prob, fmethod = _normal_approximation(zscore)
     return prob, fmethod
 
 
@@ -54,7 +55,7 @@ def _normal_approximation(zscore):
             prob = 0
         elif zscore > 6:
             prob = 1
-    return fmethod, prob
+    return prob, fmethod
 
 
 def _get_zscore(df1, df2, fcrit, noncen):
@@ -82,11 +83,11 @@ def _tiku_approximation(df1, df2, fcrit, noncen):
     fcrit_tiku = (fcrit - b_tiku) / c_tiku
     prob = special.ncfdtr(df1_tiku, df2, 0, fcrit_tiku)
     fmethod = 2
-    return fmethod, prob
+    return prob, fmethod
 
 
 def _nonadjusted(df1, df2, fcrit, noncen):
     """CDF function (no approximation)"""
     prob = special.ncfdtr(df1, df2, noncen, fcrit)
     fmethod = 1
-    return fmethod, prob
+    return prob, fmethod
