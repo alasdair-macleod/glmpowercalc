@@ -9,14 +9,14 @@ class TestProbf(TestCase):
     @patch('glmpowercalc.probf._nonadjusted')
     def test_probf_nonadjusted(self, mock):
         """probf should call the nonadjusted method for these input values"""
-        mock.return_value = None, None
+        mock.return_value = (None, None)
         probf(0, 0, 0, 0)
         assert mock.called
 
     @patch('glmpowercalc.probf._nonadjusted')
     def test_probf_nonadjusted_path_two(self, mock):
         """probf should call the nonadjusted method for these input values"""
-        mock.return_value = None, None
+        mock.return_value = (None, None)
         assert(not mock.called)
         probf(0, 10**5, 9, 10**5.9)
         assert mock.called
@@ -24,7 +24,7 @@ class TestProbf(TestCase):
     @patch('glmpowercalc.probf._tiku_approximation')
     def test_probf_tiku_approx(self, mock):
         """probf should call the _tiku_approximation method for these input values"""
-        mock.return_value = None, None
+        mock.return_value = (None, None)
         assert (not mock.called)
         probf(0, 10**7, 10, 10)
         assert mock.called
@@ -33,18 +33,18 @@ class TestProbf(TestCase):
     @patch('glmpowercalc.probf._get_zscore')
     def test_probf_norm_approx(self, zmock, mock):
         """probf should call the normal approximation method for these input values"""
-        mock.return_value = None, None
+        mock.return_value = (None, None)
         probf(0, 10 ** 9.5, 0, 0)
         assert mock.called
 
     @patch('scipy.stats.norm.cdf')
     def test__normal_approximation_fmethod_three(self, mock):
-        """Should calculate prob using norm.cdf for |zcsore| < 6"""
+        """Should calculate prob using norm.cdf for |zcsore| < 6 and give fmethod 3"""
         expected = (0, 3)
         mock.return_value = 0
         actual = _normal_approximation(0)
         assert mock.called
-        assert actual == expected
+        self.assertEquals(expected, actual)
 
     @patch('scipy.stats.norm.cdf')
     def test__normal_approximation_fmethod_four(self, mock):
