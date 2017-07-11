@@ -23,4 +23,4 @@ install:
 
 script:
   # Your tests script goes here
-script: test_probf.TestProbf
+script: python -m unittest tests.test_probf.TestProbf
