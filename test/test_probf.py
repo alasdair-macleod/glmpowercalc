@@ -67,7 +67,7 @@ class TestProbf(TestCase):
     def test_normal_approximation_method_four(self, mock):
         """Should raise an informative error when zscore = 6"""
         expected = (-1, None)
-        with self.assertRaises(UnboundLocalError): # Let's define our own exception types here'
+        with self.assertRaises(UnboundLocalError):  # Let's define our own exception types here'
             actual = _normal_approximation(6)
             self.assertEquals(actual, expected)
 
@@ -103,7 +103,6 @@ class TestProbf(TestCase):
         with self.assertRaises(ZeroDivisionError):
             actual = _tiku_approximation(0, 0, 0, 0)
 
-
     @patch('scipy.special.ncfdtr')
     def test__nonadjusted(self, mock):
         """Should calculate prob using special.ncfdtr and return fmethod 1"""
@@ -112,4 +111,10 @@ class TestProbf(TestCase):
         actual = _nonadjusted(0, 0, 0, 0)
         self.assertEquals(expected, actual)
 
+    def test__probf(self):
+        """Should have the same prob and fmethod as in IML"""
+        expected = (0.7853726, 1)
+        result = probf(1.96, 0.5, 3, 0)
+        actual = (round(result[0], 7), result[1])
+        self.assertEquals(expected, actual)
 
