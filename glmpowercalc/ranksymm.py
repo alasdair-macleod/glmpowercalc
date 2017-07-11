@@ -1,4 +1,4 @@
-
+import Matrix from matrix;
 
 def ranksymm(matrix, matrixlbl, tolerance):
 	"""This function computes the rank of a square symmetric       
