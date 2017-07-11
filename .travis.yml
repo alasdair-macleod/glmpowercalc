@@ -2,8 +2,10 @@ language: python
 python:
   - "3.4"
 # command to install dependencies
+virtualenv:
+    system_site_packages: true
 install:
-  - pip install scipy
+  - apt-get install python-scipy
   - pip install .
 # command to run tests
 script: test/test_probf.py
