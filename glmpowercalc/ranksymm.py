@@ -1,8 +1,11 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import numpy as np
 
 def ranksymm(Matrix, tolerance):
 =======
+=======
+>>>>>>> dd39514e76f6b582b4ceb09793906eb0e63a16a7
 import Matrix from matrix;
 
 def ranksymm(matrix, matrixlbl, tolerance):
