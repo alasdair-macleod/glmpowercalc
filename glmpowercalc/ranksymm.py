@@ -36,23 +36,19 @@ def ranksymm(matrix, tolerance):
         raise RanksymmValidationException("ERROR 58: Matrix {0} has MAX(ABS(all elements)) = exact zero.".format(matrix.label))
 
     # matrix not symmetric
-    elif abs(matrix.matrix - matrix.matrix.T).max() >= tolerance ** 0.5:
+    if abs(matrix.matrix - matrix.matrix.T).max() >= tolerance ** 0.5:
         raise RanksymmValidationException("ERROR 59: Matrix {0} is not symmetric within sqrt(tolerance).".format(matrix.label))
 
-    # matrix not nonnegative definite
-    elif evals.min() < -tolerance ** 0.5:
-        print("ERROR 60: Matrix ", matrix.label, " is *NOT* nonnegative definite (and has at ",
-              "least one eigenvalue strictly less than ",
-              "zero). This may happen due to programming ",
-              "error or rounding error of a nearly LTFR ",
-              "matrix. This may be able to be fixed using ",
-              "usual scaling/centering techniques. The ",
-              "Eigenvalues/MAX(ABS(original matrix)) are: ", evals)
-        print(" The max(abs(original matrix)) is ", maxbasval)
+    # matrix not non-negative definite
+    if evals.min() < -tolerance ** 0.5:
+        raise RanksymmValidationException("ERROR 60: Matrix {0} is *NOT* non-negative definite (and has at \
+              least one eigenvalue strictly less than \
+              zero). This may happen due to programming \
+              error or rounding error of a nearly LTFR \
+              matrix. This may be able to be fixed using \
+              usual scaling/centering techniques. The \
+              Eigenvalues/MAX(ABS(original matrix)) are: {1}. \
+              The max(abs(original matrix)) is {2}.".format(matrix.label, evals, maxabsval))
 
-    else:
-        rankmatrix = sum(evals >= tolerance)
-
+    rankmatrix = sum(evals >= tolerance)
     return rankmatrix
-
-

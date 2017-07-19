@@ -31,7 +31,20 @@ class TestRanksymm(TestCase):
 
     def test_nonsymm(self):
         """It should raise an exception if we have a non-symmetric matrix"""
-        m = Matrix('',np.matrix([[1,2],[3,4]]))
+        m = Matrix('', np.matrix([[1, 2], [3, 4]]))
 
         with self.assertRaises(RanksymmValidationException):
             res = ranksymm(m, 0.0000000000001)
+
+    def test_negativedefine(self):
+        """It should raise an exception if the matrix is negative defined"""
+        m = Matrix('', np.matrix([[1, 2], [2, 1]]))
+
+        with self.assertRaises(RanksymmValidationException):
+            res = ranksymm(m, 0.0000000000001)
+
+    def test_rankmatrix(self):
+        m = Matrix('', np.matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+        expected = 3
+        actual = ranksymm(m, 0.0000000000001)
+        self.assertEquals(expected, actual)
