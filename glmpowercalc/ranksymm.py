@@ -24,7 +24,7 @@ def ranksymm(matrix, tolerance):
 
     maxabsval = abs(matrix.matrix).max()
     nmatrix = matrix.matrix / maxabsval
-    evals = np.linalg.eigvals(matrix.matrix)
+    evals = np.linalg.eigvals(nmatrix)
 
     # TODO
     # matrix with all missing values
@@ -36,7 +36,7 @@ def ranksymm(matrix, tolerance):
         raise RanksymmValidationException("ERROR 58: Matrix {0} has MAX(ABS(all elements)) = exact zero.".format(matrix.label))
 
     # matrix not symmetric
-    if abs(matrix.matrix - matrix.matrix.T).max() >= tolerance ** 0.5:
+    if abs(nmatrix - nmatrix.T).max() >= tolerance ** 0.5:
         raise RanksymmValidationException("ERROR 59: Matrix {0} is not symmetric within sqrt(tolerance).".format(matrix.label))
 
     # matrix not non-negative definite
