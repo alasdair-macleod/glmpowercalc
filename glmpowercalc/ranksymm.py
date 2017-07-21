@@ -22,18 +22,18 @@ def ranksymm(matrix, tolerance):
     if matrix.matrix.shape[0] != matrix.matrix.shape[1]:
         raise RanksymmValidationException("ERROR 56: Matrix {0} is not square.".format(matrix.label))
 
-    maxabsval = abs(matrix.matrix).max()
-    nmatrix = matrix.matrix / maxabsval
-    evals = np.linalg.eigvals(nmatrix)
-
-    # TODO
     # matrix with all missing values
-    # elif (matrix.matrix == np.NA).all():
-    #	print("ERROR 57: Matrix ", matrix.label, "is all missing values")
+    if np.isnan(matrix.matrix).all():
+        raise RanksymmValidationException("ERROR 57: Matrix {0} is all missing values.".format(matrix.label))
+
+    maxabsval = abs(matrix.matrix).max()
 
     # matrix with all zero
     if maxabsval == 0:
         raise RanksymmValidationException("ERROR 58: Matrix {0} has MAX(ABS(all elements)) = exact zero.".format(matrix.label))
+
+    nmatrix = matrix.matrix / maxabsval
+    evals = np.linalg.eigvals(nmatrix)
 
     # matrix not symmetric
     if abs(nmatrix - nmatrix.T).max() >= tolerance ** 0.5:
