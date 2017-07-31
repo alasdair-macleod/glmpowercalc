@@ -9,6 +9,9 @@ def fwarn(fmethod, cl):
 
     :param fmethod:
     :param cl:
+        =1 if calculation of power of a test
+        =2 if calculation of lower CL for power of a test
+        =3 if calculation of upper CL for power of a test
     :return: powerwarn, Vector of power calculation warning counts
     """
     powerwarn = np.zeros((23, 1))
