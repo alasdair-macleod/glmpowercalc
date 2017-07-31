@@ -7,7 +7,6 @@ from glmpowercalc.exceptions.ranksymm_validation_exception import RanksymmValida
 
 class TestRanksymm(TestCase):
 
-
     def test_emptymatrix(self):
         """It should raise an exception if matrix is Empty"""
         m = Matrix('', np.matrix([]))
@@ -18,6 +17,13 @@ class TestRanksymm(TestCase):
     def test_nonsquare(self):
         """It should raise an exception if the matrix is not square"""
         m = Matrix('', np.matrix([[1, 2, 3], [4, 5, 6]]))
+
+        with self.assertRaises(RanksymmValidationException):
+            res = ranksymm(m, 1)
+
+    def test_allmissing(self):
+        """It should raise an exception if the matrix are all missing"""
+        m = Matrix('', np.matrix([[np.NaN, np.NaN], [np.NaN, np.NaN]]))
 
         with self.assertRaises(RanksymmValidationException):
             res = ranksymm(m, 1)
