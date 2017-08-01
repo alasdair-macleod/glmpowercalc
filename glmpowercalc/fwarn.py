@@ -1,5 +1,6 @@
 import numpy as np
 
+powerwarn = np.zeros(23, dtype=np.int)
 
 def fwarn(fmethod, cl):
     """
@@ -14,7 +15,9 @@ def fwarn(fmethod, cl):
         =3 if calculation of upper CL for power of a test
     :return: powerwarn, Vector of power calculation warning counts
     """
-    powerwarn = np.zeros((23, 1))
-    powerwarn[(fmethod-1)+5*(cl-1) - 1, 0] = powerwarn[(fmethod-1)+5*(cl-1) - 1, 0] + 1
+    powerwarn[(fmethod-1)+5*(cl-1) - 1] = powerwarn[(fmethod-1)+5*(cl-1) - 1] + 1
 
     return powerwarn
+
+
+class WarningCount
