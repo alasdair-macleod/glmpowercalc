@@ -44,7 +44,7 @@ class TestProbf(TestCase):
         mock.return_value = 0
         actual = _normal_approximation(0)
         assert mock.called
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     @patch('scipy.stats.norm.cdf')
     def test__normal_approximation_fmethod_four(self, mock):
@@ -75,7 +75,7 @@ class TestProbf(TestCase):
         """Should return the expected value for normal data"""
         expected = -0.39007506867134967
         actual = _get_zscore(1, 1, 1, 1)
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     # TODO raise our own error here and handle sensibly
     def test_get_zscore_div_zero(self):
@@ -109,12 +109,12 @@ class TestProbf(TestCase):
         expected = (0, 1)
         mock.return_value = 0
         actual = _nonadjusted(0, 0, 0, 0)
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test__probf(self):
         """Should have the same prob and fmethod as in IML"""
         expected = (0.7853726, 1)
         result = probf(1.96, 0.5, 3, 0)
         actual = (round(result[0], 7), result[1])
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 

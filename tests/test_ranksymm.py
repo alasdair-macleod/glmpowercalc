@@ -53,4 +53,4 @@ class TestRanksymm(TestCase):
         m = Matrix('', np.matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
         expected = 3
         actual = ranksymm(m, 0.0000000000001)
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
