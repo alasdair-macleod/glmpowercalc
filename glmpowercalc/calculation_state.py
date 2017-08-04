@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class CalculationState(object):
     """object to hold stateful information for powerlib calculation"""
 

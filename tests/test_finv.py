@@ -27,4 +27,4 @@ class TestFinv(TestCase):
         expected = 0.7185356
         actual = finv(0.05, 100, 100)
         result = round(actual, 7)
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)

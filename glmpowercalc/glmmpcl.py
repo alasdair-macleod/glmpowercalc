@@ -3,11 +3,10 @@ from scipy.stats import chi2
 from scipy import special
 from glmpowercalc.finv import finv
 from glmpowercalc.probf import probf
-from glmpowercalc.fwarn import fwarn
 
 
 def glmmpcl(f_a, alphatest, dfh, n2, dfe2, cltype, n_est, rank_est,
-            alpha_cl, alpha_cu, tolerance):
+            alpha_cl, alpha_cu, tolerance, powerwarn):
     """
     This module computes confidence intervals for noncentrality and
     power for a General Linear Hypothesis (GLH  Ho:C*beta=theta0) test
@@ -37,6 +36,7 @@ def glmmpcl(f_a, alphatest, dfh, n2, dfe2, cltype, n_est, rank_est,
     :param alpha_cl: Lower tail probability for confidence interval
     :param alpha_cu: Upper tail probability for confidence interval
     :param tolerance:
+    :param powerwarn: calculation_state object
     :return:
         power_l, power confidence interval lower bound
         power_u, power confidence interval upper bound
@@ -74,7 +74,7 @@ def glmmpcl(f_a, alphatest, dfh, n2, dfe2, cltype, n_est, rank_est,
         fmethod_l = 5
     else:
         prob, fmethod_l = probf(fcrit, dfh, dfe2, noncen_l)
-        powerwarn = fwarn(fmethod_l, 2)
+        powerwarn.fwarn(fmethod_l, 2)
 
     if fmethod_l == 4 and prob == 1:
         power_l = alphatest
@@ -100,7 +100,7 @@ def glmmpcl(f_a, alphatest, dfh, n2, dfe2, cltype, n_est, rank_est,
         fmethod_u = 5
     else:
         prob, fmethod_u = probf(fcrit, dfh, dfe2, noncen_u)
-        powerwarn = fwarn(fmethod_u, 3)
+        powerwarn.fwarn(fmethod_u, 3)
 
     if fmethod_u == 4 and prob == 1:
         power_u = alphatest
@@ -110,8 +110,8 @@ def glmmpcl(f_a, alphatest, dfh, n2, dfe2, cltype, n_est, rank_est,
     # warning for conservative confidence interval
     if cltype > 1 and n2 != n_est:
         if alpha_cl > 0 and noncen_l == 0:
-            powerwarn[4, 0] = powerwarn[4, 0] + 1
+            powerwarn.directfwarn(5)
         if alpha_cl == 0 and noncen_u == 0:
-            powerwarn[9, 0] = powerwarn[9, 0] + 1
+            powerwarn.directfwarn(10)
 
     return power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u
