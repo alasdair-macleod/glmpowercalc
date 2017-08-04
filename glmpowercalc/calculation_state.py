@@ -24,3 +24,11 @@ class CalculationState(object):
         :return: powerwarn, Vector of power calculation warning counts
         """
         self.powerwarn[(fmethod - 1) + 5 * (cl - 1) - 1] = self.powerwarn[(fmethod - 1) + 5 * (cl - 1) - 1] + 1
+
+    def directfwarn(self, sequence):
+        """
+        This method is used for directly counting fwarn
+        :param sequence: the sequence number of the warning
+        :return: powerwarn
+        """
+        self.powerwarn[sequence - 1] = self.powerwarn[sequence - 1] + 1
