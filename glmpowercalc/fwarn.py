@@ -10,9 +10,9 @@ def fwarn(fmethod, cl):
 
     :param fmethod:
     :param cl:
-        =1 if calculation of power of a test
-        =2 if calculation of lower CL for power of a test
-        =3 if calculation of upper CL for power of a test
+        =1 if calculation of power of a tests
+        =2 if calculation of lower CL for power of a tests
+        =3 if calculation of upper CL for power of a tests
     :return: powerwarn, Vector of power calculation warning counts
     """
     powerwarn[(fmethod-1)+5*(cl-1) - 1] = powerwarn[(fmethod-1)+5*(cl-1) - 1] + 1
