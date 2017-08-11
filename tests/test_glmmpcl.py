@@ -1,5 +1,4 @@
 from unittest import TestCase
-
 from glmpowercalc.calculation_state import CalculationState
 from glmpowercalc.glmmpcl import glmmpcl
 

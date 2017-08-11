@@ -46,15 +46,15 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         df2 = 4 + (rank_C*rank_U +2) * (nu_df2/de_df2)
 
     # df2 need to > 0 and eigenvalues not missing
-    if df2 <= 0 or np.isnan(eval_HINVE[0, 0]):
+    if df2 <= 0 or np.isnan(eval_HINVE):
         power = float('nan')
         powerwarn.directfwarn(15)
     else:
         if mmethod[0] > 2 or min_rank_C_U == 1:
-            hlt = (eval_HINVE * (total_N - rank_X) / total_N).sum(axis=1)
+            hlt = eval_HINVE * (total_N - rank_X) / total_N
             omega = (total_N * min_rank_C_U) * (hlt / min_rank_C_U)
         else:
-            hlt = eval.sum(axis=1)
+            hlt = eval_HINVE
             omega = df2 * (hlt / min_rank_C_U)
 
         hlt_fcrit = finv(1 - alphascalar, df1, df2)
@@ -66,15 +66,14 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         else:
             power = 1 - hlt_prob
 
-    lbl = ("power_hlt")
-
     if cltype >= 1:
-        lbl = ("power_hlt_l", "power_hlt", 'power_hlt_u')
         if np.isnan(power):
             powerwarn.directfwarn(16)
         else:
             f_a = omega /df1
-            glmmpcl(f_a, alphascalar, df1, total_N, df2, cltype, n_est, rank_est,
+            return glmmpcl(f_a, alphascalar, df1, total_N, df2, cltype, n_est, rank_est,
                     alpha_cl, alpha_cu, tolerance, powerwarn)
+
+    return power_l, power, power_u
 
 
