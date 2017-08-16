@@ -43,7 +43,7 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
     elif mmethod[0] == 2 or mmethod[0] == 4:
         nu_df2 = (total_N - rank_X)*(total_N - rank_X) - (total_N - rank_X)*(2*rank_U + 3) + rank_U*(rank_U + 3)
         de_df2 = (total_N - rank_X)*(rank_C + rank_U + 1) - (rank_C + 2*rank_U + rank_U*rank_U - 1)
-        df2 = 4 + (rank_C*rank_U +2) * (nu_df2/de_df2)
+        df2 = 4 + (rank_C*rank_U + 2) * (nu_df2/de_df2)
 
     # df2 need to > 0 and eigenvalues not missing
     if df2 <= 0 or np.isnan(eval_HINVE):
