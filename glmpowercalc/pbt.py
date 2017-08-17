@@ -54,7 +54,7 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         df1 = 2 * m1 * (m1 - m2) / denom
         df2 = 2 * (m1 - m2) * (1 - m1) /denom
 
-    if df2 <= 0 or np.isnan(eval_HINVE):
+    if df2 <= 0 or np.isnan(eval_HINVE[0]):
         power = float('nan')
         powerwarn.directfwarn(15)
     else:
@@ -84,7 +84,7 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
 
     if cltype >= 1 and not np.isnan(power):
         f_a = omega /df1
-        return glmmpcl(f_a, alphascalar, df1, total_N, df2, cltype, n_est, rank_est,
+        power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(f_a, alphascalar, df1, total_N, df2, cltype, n_est, rank_est,
                        alpha_cl, alpha_cu, tolerance, powerwarn)
 
     return power_l, power, power_u
