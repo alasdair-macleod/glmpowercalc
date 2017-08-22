@@ -148,4 +148,3 @@ class TestUnirep(TestCase):
         result = (actual[0], round(actual[1], 7))
         self.assertEqual(result, expected)
 
-    
