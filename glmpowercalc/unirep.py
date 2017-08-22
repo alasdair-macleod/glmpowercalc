@@ -272,3 +272,166 @@ def truncn(n, alb, anc, uu, tausq, lim, icount, sigsq, ir):
         truncn = err2
 
     return truncn
+
+
+def findu(utx, n, alb, anc, accx, lim, icount, sigsq, ir):
+    """
+    This module finds U such that _TRUNCN(U) < ACCX and _TRUNCN(U / 1.2) > ACCX.
+    :param utx:
+    :param n: Vector of degrees of freedom
+    :param alb: IRx1 vector of constant multipliers
+    :param anc: Vector of noncentrality parameters
+    :param accx:
+    :param lim: Maximum number of integration terms
+    :param icount: Count of number of times this module is called
+    :param sigsq: square of SIGMA, the coefficient of normal term
+    :param ir: Number of chi-squared terms in the sum
+    :return: utx
+    """
+    divis = [2.0, 1.4, 1.2, 1.1]
+    ut = utx
+    u = utx/4
+
+    if truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) > accx:
+        u = ut
+        while truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) > accx:
+            ut = ut * 4
+            u = ut
+    else:
+        ut = u
+        u = u / 4
+        while truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) <= accx:
+            ut = u
+            u = u / 4
+
+    for i in divis:
+        u = ut / i
+        if truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) <= accx:
+            ut = u
+        else:
+            break
+
+    utx = ut
+
+    return utx
+
+
+def integr(n, alb, anc, nterm, aintrv, tausq, main, c, sigsq, ir):
+    """
+
+    :param n: Vector of degrees of freedom
+    :param alb: IRx1 vector of constant multipliers
+    :param anc: Vector of noncentrality parameters
+    :param nterm: Number of terms in integration
+    :param aintrv:
+    :param tausq:
+    :param main: True, False
+    :param c: Point at which the distribution function should be evaluated
+    :param sigsq: square of SIGMA, the coefficient of normal term
+    :param ir: Number of chi-squared terms in the sum
+    :return:
+            aintl:
+            ersm:
+    """
+    pi = 2 * np.arccos(0)
+    ainpi = aintrv / pi
+    k = nterm
+    aintl = 0
+    ersm = 0
+
+    while k >= 0:
+        u = (k + 0.5) * aintrv
+        sum1 = -2 * u * c
+        sum2 = abs(sum1)
+        sum3 = -0.5 * sigsq * (u ** 2)
+        j = ir
+        while j > 0:
+            nj = n[j-1]
+            x = 2 * alb[j-1] * u
+            y = x ** 2
+            sum3 = sum3 - 0.25 * nj * alog1(y, True)
+            y = anc[j-1] * x / (1 + y)
+            z = nj * np.arctan(x) + y
+            sum1 = sum1 + z
+            sum2 = sum2 + abs(z)
+            sum3 = sum3 - 0.5*x*y
+            j = j - 1
+        x = ainpi * exp1(sum3) / u
+        if not main:
+            x = x * (1 - exp1(-0.5 * tausq * u **2))
+
+        sum1 = np.sin(0.5 * sum1) * x
+        sum2 = 0.5 * sum2 * x
+        aintl = aintl + sum1
+        ersm = ersm + sum2
+        k = k -1
+
+    return aintl, ersm
+
+
+def cfe(n, alb, anc, ith, x, lim, icount, ndtsrt, ir):
+    """
+    This module computes the coefficient of TAUSQ in error when
+    the convergence factor of Exp(-0.5 * TAUSQ * U**2) is used when DF
+    is evaluated at X.
+
+    :param n: Vector of degrees of freedom
+    :param alb: IRx1 vector of constant multipliers
+    :param anc: Vector of noncentrality parameters
+    :param ith: Vector of ranks of absolute values of ALB
+    :param x:
+    :param lim: Maximum number of integration terms
+    :param icount: Count of number of times this module is called
+    :param ndtsrt:   =True if _ORDER module has not been run
+                     =False if _ORDER module has been run
+    :param ir: Number of chi-squared terms in the sum
+    :return:
+            fail, =True if module produces unreasonable values
+            fcfe, Coefficient of TAUSQ
+    """
+    icount.counting(lim)
+
+    if ndtsrt:
+        ith, ndtsrt = order(alb)
+
+    axl = abs(x)
+    sxl = x / abs(x)
+    sum1 = 0
+    j = ir
+
+    while j > 0:
+        it = ith[j-1]
+        if alb[it - 1] * sxl > 0:
+            alj = abs(alb[it - 1])
+            axl1 = axl - alj * (n[it - 1] + anc[it - 1])
+            aln28 = np.log(2) / 8
+            axl2 = alj / aln28
+            if axl1 > axl2:
+                axl = axl1
+                j = j - 1
+            else:
+                if axl > axl2:
+                    axl = axl2
+                sum1 = (axl - axl1) /alj
+                k = j - 1
+                while k > 0:
+                    itk = ith[k - 1]
+                    sum1 = sum1 + (n[itk - 1] + anc[itk - 1])
+                    k = k - 1
+                break
+        else:
+            j = j - 1
+
+    if sum1 > 100:
+        fcfe = 1
+        fail = True
+    else:
+        fcfe = 2 ** (sum1 /4) /((2 * np.arccos(0)) * axl ** 2)
+        fail = False                        #In powerlib, this case has not been defined
+
+    return fail, fcfe
+
+
+
+
+
