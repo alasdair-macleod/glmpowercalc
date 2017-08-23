@@ -148,3 +148,18 @@ class TestUnirep(TestCase):
         result = (actual[0], round(actual[1], 7))
         self.assertEqual(result, expected)
 
+    def test_as(self):
+        """ should return expected value """
+        expected = 0
+        actual = unirep.AS(irr=3,
+                           lim1=10000,
+                           alb=np.array([2, 3, 4]),
+                           sigma=1,
+                           cc=0.5,
+                           acc=0.001,
+                           anc=[1, 2, 3],
+                           n=[2, 3, 5],
+                           ith=[1, 1, 1],
+                           prnt_prob=True,
+                           error_chk=True)
+        self.assertEqual(actual, expected)
