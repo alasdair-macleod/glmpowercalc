@@ -15,7 +15,31 @@ def qprob(q, Lambda, nu, omega, accuracy):
     :param accuracy: maximum error in probability allowed
     :return: prob, Prob{Q <= q}, the CDF. This is set to zero if any problems occur
     """
-    pass
+    nrow_lambda = np.shape(Lambda)[0]
+    ncol_lambda = np.shape(Lambda)[1]
+    nrow_nu     = np.shape(nu)[0]
+    ncol_nu     = np.shape(nu)[1]
+    nrow_omega  = np.shape(omega)[0]
+    ncol_omega  = np.shape(omega)[1]
+
+    if max(ncol_lambda, ncol_nu, ncol_omega) > 1:
+        prob = float('nan')
+    elif nrow_nu != nrow_lambda or nrow_omega != nrow_lambda:
+        prob = float('nan')
+    else:
+        prob, trace, icount, ifault = AS(nrow_lambda,
+                                         50000,
+                                         0,
+                                         q,
+                                         accuracy,
+                                         omega,
+                                         nu,
+                                         False,
+                                         False)
+        if ifault > 0:
+            prob = float('nan')
+
+    return prob
 
 
 def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
@@ -111,7 +135,6 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     else:
         if almin == 0 and almax == 0 and sigma == 0:
             ifault = 3
-
         else:
             sd = np.sqrt(sd)
             if almax < -almin:
@@ -176,6 +199,7 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
                 d1 = fctff - c
                 if d1 < 0:
                     qf = 1
+                    break
                 else:
                     un, fctff = ctff(un,
                                      n,
@@ -192,6 +216,7 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
                     d2 = c - fctff
                     if d2 < 0:
                         qf = 0
+                        break
                     else:
                         if d1 <= d2:
                             aintv = d2
@@ -206,6 +231,7 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
                         else:
                             if xntm > xlim:
                                 ifault = 1
+                                break
                             else:
                                 ntm = round(xntm, 0)
                                 aintv1 = utx / xntm
@@ -262,43 +288,43 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
                                                     ir)
                                         acc1 = 0.75 * acc1
 
-            trace[3] = aintv
-            if xnt > xlim:
-                ifault = 1
-            else:
-                nt = round(xnt, 0)
-                aintl, ersm = integr(n,
-                                     alb,
-                                     anc,
-                                     nt,
-                                     aintv,
-                                     0,
-                                     True,
-                                     c,
-                                     sigsq,
-                                     ir)
-                trace[2] = trace[2] + 1
-                trace[1] = trace[1] + nt + 1
-                qf = 0.5 - aintl
-                trace[0] = ersm
-                up = ersm
+                        trace[3] = aintv
+                        if xnt > xlim:
+                            ifault = 1
+                        else:
+                            nt = round(xnt, 0)
+                            aintl, ersm = integr(n,
+                                                 alb,
+                                                 anc,
+                                                 nt,
+                                                 aintv,
+                                                 0,
+                                                 True,
+                                                 c,
+                                                 sigsq,
+                                                 ir)
+                            trace[2] = trace[2] + 1
+                            trace[1] = trace[1] + nt + 1
+                            qf = 0.5 - aintl
+                            trace[0] = ersm
+                            up = ersm
 
-                x = up + (acc / 10.0)
-                j = 1
+                            x = up + (acc / 10.0)
+                            j = 1
 
-                while j <= 8:
-                    if j * x == j * up:
-                        ifault = 2
-                    j = j + 2
+                            while j <= 8:
+                                if j * x == j * up:
+                                    ifault = 2
+                                j = j + 2
 
-                trace[6] = icount.count
+                            trace[6] = icount.count
 
     if prnt_prob:
         print(qf)
     if error_chk:
         print(trace, ifault, icount.count)
 
-    return qf
+    return qf, trace, icount.count, ifault
 
 
 class Countr(object):
