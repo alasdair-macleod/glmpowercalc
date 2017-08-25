@@ -13,7 +13,7 @@ class TestPbt(TestCase):
         expected = (0.52768, 0.69772, 0.86495)
         powerwarn = CalculationState(0.0001)
         eval_HINVE = np.array([0.6])
-        result = special(2, 1, 2, 5, eval_HINVE, 0.5, [4, 2, 2], [0,0,0,0,0],
+        result = special(2, 1, 2, 5, eval_HINVE, 0.5,
                      1, 5, 2, 0.048, 0.052, 0.0001, powerwarn)
         actual = (np.round(result[0], 5),
                   np.round(result[1], 5),
