@@ -3,8 +3,8 @@ from glmpowercalc.finv import finv
 from glmpowercalc.probf import probf
 from glmpowercalc.glmmpcl import glmmpcl
 
-def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
-        optpowermat2, cltype, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
+def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alpha_scalar, m_method,
+        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
     """
     This module calculates power for Wilk's Lambda based on
     the F approx. method.  W is the "population value" of Wilks` Lambda,
@@ -18,10 +18,9 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
     :param rank_X: rank of X matrix
     :param total_N: total N
     :param eval_HINVE: eigenvalues for H*INV(E)
-    :param alphascalar: size of test
-    :param mmethod: multirep method
-    :param optpowermat2: options matrix specifying CL options
-    :param cltype:
+    :param alpha_scalar: size of test
+    :param m_method: multirep method
+    :param cl_type:
     :param n_est:
     :param rank_est:
     :param alpha_cl:
@@ -43,7 +42,7 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         w = float('nan')
         powerwarn.directfwarn(15)
     else:
-        if mmethod[2] == 2 or mmethod[2] == 4 or min_rank_C_U == 1:
+        if m_method[2] == 2 or m_method[2] == 4 or min_rank_C_U == 1:
             w = np.exp(np.sum(-np.log(np.ones((min_rank_C_U, 1)) + eval_HINVE * (total_N - rank_X)/total_N)))
         else:
             w = np.exp(np.sum(-np.log(np.ones((min_rank_C_U, 1)) + eval_HINVE)))
@@ -53,9 +52,9 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         rs = 1
         tempw = w
     else:
-        rm = total_N - rank_X - (rank_U - rank_C + 1)/2
-        rs = np.sqrt(rank_C*rank_C*rank_U*rank_U - 4) / (rank_C*rank_C + rank_U*rank_U - 5)
-        r1 = (rank_U - rank_C - 2)/4
+        rm = total_N - rank_X - (rank_U - rank_C + 1) / 2
+        rs = np.sqrt((rank_C*rank_C*rank_U*rank_U - 4) / (rank_C*rank_C + rank_U*rank_U - 5))
+        r1 = (rank_U * rank_C - 2)/4
         if np.isnan(w):
             tempw = float('nan')
         else:
@@ -65,7 +64,7 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
     if np.isnan(tempw):
         omega = float('nan')
     else:
-        if mmethod[2] == 2 or mmethod[2] == 4 or min_rank_C_U == 1:
+        if m_method[2] == 2 or m_method[2] == 4 or min_rank_C_U == 1:
             omega = (total_N * rs) * (1 - tempw) /tempw
         else:
             omega = df2 * (1 - tempw) / tempw
@@ -74,22 +73,32 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         power = float('nan')
         powerwarn.directfwarn(15)
     else:
-        wlk_fcrit = finv(1 - alphascalar, df1, df2)
+        wlk_fcrit = finv(1 - alpha_scalar, df1, df2)
         wlk_prob, wlk_fmethod = probf(wlk_fcrit, df1, df2, omega)
         powerwarn.fwarn(wlk_fmethod, 1)
 
         if wlk_fmethod == 4 and wlk_prob == 1:
-            power = alphascalar
+            power = alpha_scalar
         else:
             power = 1 - wlk_prob
 
-    if cltype >= 1:
+    if cl_type >= 1:
         if np.isnan(power):
             powerwarn.directfwarn(16)
         else:
             f_a = omega /df1
-            power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(f_a, alphascalar, df1, total_N, df2, cltype, n_est, rank_est,
-                    alpha_cl, alpha_cu, tolerance, powerwarn)
+            power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(f_a,
+                                                                                 alpha_scalar,
+                                                                                 df1,
+                                                                                 total_N,
+                                                                                 df2,
+                                                                                 cl_type,
+                                                                                 n_est,
+                                                                                 rank_est,
+                                                                                 alpha_cl,
+                                                                                 alpha_cu,
+                                                                                 tolerance,
+                                                                                 powerwarn)
 
     return power_l, power, power_u
 
