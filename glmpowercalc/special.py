@@ -3,8 +3,9 @@ from glmpowercalc.finv import finv
 from glmpowercalc.probf import probf
 from glmpowercalc.glmmpcl import glmmpcl
 
-def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
-        optpowermat2, cltype, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
+
+def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alpha_scalar,
+            cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
     """
     This module performs two disparate tasks. For B=1 (UNIVARIATE
     TEST), the powers are calculated more efficiently. For A=1 (SPECIAL
@@ -19,10 +20,8 @@ def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
     :param rank_X: rank of X matrix
     :param total_N: total N
     :param eval_HINVE: eigenvalues for H*INV(E)
-    :param alphascalar: size of test
-    :param mmethod: multirep method
-    :param optpowermat2: options matrix specifying CL options
-    :param cltype:
+    :param alpha_scalar: size of test
+    :param cl_type:
     :param n_est:
     :param rank_est:
     :param alpha_cl:
@@ -31,7 +30,6 @@ def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
     :param powerwarn: calculation_state object
     :return: power, power for Hotelling-Lawley trace & CL if requested
     """
-    min_rank_C_U = min(rank_C, rank_U)
     df1 = rank_C * rank_U
     df2 = total_N - rank_X - rank_U + 1
 
@@ -40,23 +38,32 @@ def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, mmethod,
         powerwarn.directfwarn(15)
     else:
         omega = eval_HINVE[0] * (total_N - rank_X)
-        special_fcrit = finv(1 - alphascalar, df1, df2)
+        special_fcrit = finv(1 - alpha_scalar, df1, df2)
         special_prob, special_fmethod = probf(special_fcrit, df1, df2, omega)
         powerwarn.fwarn(special_fmethod, 1)
 
         if special_fmethod == 4 and special_prob == 1:
-            power = alphascalar
+            power = alpha_scalar
         else:
             power = 1 - special_prob
 
-    if cltype >= 1:
+    if cl_type >= 1:
         if np.isnan(power):
             powerwarn.directfwarn(16)
         else:
-            f_a = omega /df1
-            power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(f_a, alphascalar, df1, total_N, df2, cltype, n_est, rank_est,
-                    alpha_cl, alpha_cu, tolerance, powerwarn)
+            f_a = omega / df1
+            power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(f_a,
+                                                                                 alpha_scalar,
+                                                                                 df1,
+                                                                                 total_N,
+                                                                                 df2,
+                                                                                 cl_type,
+                                                                                 n_est,
+                                                                                 rank_est,
+                                                                                 alpha_cl,
+                                                                                 alpha_cu,
+                                                                                 tolerance,
+                                                                                 powerwarn)
+            return power_l, power, power_u
 
-    return power_l, power, power_u
-
-
+    return power
