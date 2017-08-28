@@ -324,7 +324,7 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     if error_chk:
         print(trace, ifault, icount.count)
 
-    return qf, trace, icount.count, ifault
+    return qf, trace, ifault, icount.count
 
 
 class Countr(object):
