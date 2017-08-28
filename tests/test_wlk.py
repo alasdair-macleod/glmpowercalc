@@ -16,7 +16,7 @@ def my_round(n, ndigits):
     return part / (10 ** ndigits)
 
 
-class TestHlt(TestCase):
+class TestWlk(TestCase):
 
     def test_wlk1(self):
         """

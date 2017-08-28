@@ -3,9 +3,9 @@ import numpy as np
 from glmpowercalc.calculation_state import CalculationState
 from glmpowercalc.special import special
 
-class TestPbt(TestCase):
+class TestSpecial(TestCase):
 
-    def test_pbt(self):
+    def test_Special(self):
         """
         This should return the expected value
         """
