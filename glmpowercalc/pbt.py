@@ -41,19 +41,22 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alpha_scalar, m_method,
         df1 = rank_C * rank_U
         df2 = min_rank_C_U * (total_N - rank_X + min_rank_C_U - rank_U)
 
-    elif m_method[1] == 2 or m_method ==4:
-        mu1 = rank_C * rank_U / (total_N - rank_X + rank_C)
-        factor1 = (total_N - rank_X + rank_C -rank_U) / (total_N - rank_X + rank_C - 1)
-        factor2 = (total_N - rank_X) / (total_N - rank_X + rank_C + 2)
-        variance = 2 * rank_C * rank_U * factor1 * factor2 / (total_N - rank_X + rank_C)**2
-        mu2 = variance + mu1**2
-        m1 = mu1 / min_rank_C_U
-        m2 = mu2 / (min_rank_C_U * min_rank_C_U)
-        denom = m2 - m1 * m1
-        df1 = 2 * m1 * (m1 - m2) / denom
-        df2 = 2 * (m1 - m2) * (1 - m1) /denom
+    elif m_method[1] == 2 or m_method[1] == 4:
+        if total_N - rank_X + rank_C != 0 and total_N - rank_X + rank_C - 1 != 0:
+            mu1 = rank_C * rank_U / (total_N - rank_X + rank_C)
+            factor1 = (total_N - rank_X + rank_C - rank_U) / (total_N - rank_X + rank_C - 1)
+            factor2 = (total_N - rank_X) / (total_N - rank_X + rank_C + 2)
+            variance = 2 * rank_C * rank_U * factor1 * factor2 / (total_N - rank_X + rank_C)**2
+            mu2 = variance + mu1**2
+            m1 = mu1 / min_rank_C_U
+            m2 = mu2 / (min_rank_C_U * min_rank_C_U)
+            denom = m2 - m1 * m1
+            df1 = 2 * m1 * (m1 - m2) / denom
+            df2 = 2 * (m1 - m2) * (1 - m1) / denom
+        else:
+            df2 = float('nan')
 
-    if df2 <= 0 or np.isnan(eval_HINVE[0]):
+    if df2 <= 0 or np.isnan(df2) or np.isnan(eval_HINVE[0]):
         power = float('nan')
         powerwarn.directfwarn(15)
     else:
@@ -96,4 +99,6 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alpha_scalar, m_method,
                                                                              tolerance,
                                                                              powerwarn)
 
-    return power_l, power, power_u
+        return power_l, power, power_u
+
+    return power

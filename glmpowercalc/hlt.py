@@ -82,5 +82,6 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alpha_scalar, m_method,
                                                                                  alpha_cu,
                                                                                  tolerance,
                                                                                  powerwarn)
+            return power_l, power, power_u
 
-    return power_l, power, power_u
+    return power
