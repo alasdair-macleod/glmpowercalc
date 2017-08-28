@@ -57,7 +57,7 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alpha_scalar, m_method,
         power = float('nan')
         powerwarn.directfwarn(15)
     else:
-        if m_method[1] > 2 or min(rank_U, rank_C) == 1:
+        if m_method[1] > 2 or min_rank_C_U == 1:
             evalt = eval_HINVE * (total_N - rank_X) / total_N
         else:
             evalt = eval_HINVE
