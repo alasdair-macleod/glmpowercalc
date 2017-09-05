@@ -2,46 +2,6 @@ import numpy as np
 import sys
 
 
-def qprob(q, Lambda, nu, omega, accuracy):
-    """
-    This function returns the CDF of a weighted sum of independent
-    chi squares via Davies' algorithm.
-
-    :param q: point at which CDF is evaluated: Prob{Q <= q}
-                Note: Q is often zero if start from ratio of positively weighted forms
-    :param Lambda: Nx1 vector of coefficients
-    :param nu: Nx1 vector of degrees of freedom
-    :param omega: Nx1 vector of noncentralities
-    :param accuracy: maximum error in probability allowed
-    :return: prob, Prob{Q <= q}, the CDF. This is set to zero if any problems occur
-    """
-    nrow_lambda = np.shape(Lambda)[0]
-    ncol_lambda = np.shape(Lambda)[1]
-    nrow_nu     = np.shape(nu)[0]
-    ncol_nu     = np.shape(nu)[1]
-    nrow_omega  = np.shape(omega)[0]
-    ncol_omega  = np.shape(omega)[1]
-
-    if max(ncol_lambda, ncol_nu, ncol_omega) > 1:
-        prob = float('nan')
-    elif nrow_nu != nrow_lambda or nrow_omega != nrow_lambda:
-        prob = float('nan')
-    else:
-        prob, trace, icount, ifault = AS(nrow_lambda,
-                                         50000,
-                                         0,
-                                         q,
-                                         accuracy,
-                                         omega,
-                                         nu,
-                                         False,
-                                         False)
-        if ifault > 0:
-            prob = float('nan')
-
-    return prob
-
-
 class Countr(object):
     """ object to hold number of calls of Countr"""
 
