@@ -79,6 +79,11 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
                       linearCombinationConstantCoeffs=alb,
                       degreesOfFreedom=n,
                       nonCentralities=anc)
+    # Calculate sum of means for each term in linear combination
+    amean = sumMeans(linearCombinationConstantCoeffs=alb,
+                     degreesOfFreedom=n,
+                     nonCentralities=anc)
+
 
 def sumMeans(linearCombinationConstantCoeffs,
             degreesOfFreedom,
