@@ -1,7 +1,6 @@
 import numpy as np
 from glmpowercalc.unirep import Countr
 
-
 def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     """
     Computes distribution of a linear combination of non-central chi-
@@ -70,5 +69,64 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     amean = 0
     j = 1
 
+    #Check validity of input
+    valid, msg = isInputValid(n, anc)[0]
+    if not valid:
+        raise Exception(msg)
+        return None
     # Calculate sum of initial sd + variance for each term in linear combination
-    sd = sd + sum(alb**2 * (2*n + 4*anc))
+    sd = sumVariances(initialVariance = sd,
+                      linearCombinationConstantCoeffs=alb,
+                      degreesOfFreedom=n,
+                      nonCentralities=anc)
+
+def sumMeans(linearCombinationConstantCoeffs,
+            degreesOfFreedom,
+            nonCentralities):
+    sumofmeans = sum([
+        linearCombinationConstantCoeffs[i] * (degreesOfFreedom[i] + nonCentralities[i])
+        for i in range(len(degreesOfFreedom))
+    ])
+    return sumofmeans
+
+
+def sumVariances(initialVariance,
+                linearCombinationConstantCoeffs,
+                degreesOfFreedom,
+                nonCentralities):
+    """
+    Calculates the sum of the initial variance (user defined? -- where??) plus the variance for each term in the linear
+    combination of non-central chi-squared random variables.
+
+    :param initialVariance: possibly user defined?? where does this come from???
+    :param linearCombinationConstantCoeffs: the constant multipliers in the linear combination of non-central
+    chi-squared random variables.
+    :param: degreesOfFreedom: List (vector) of degrees of freedom (n in IML)
+    :param nonCentralities: List (vector) of non centrality parameters in linear combination of non-central
+    chi-squared random variables.
+    :return: Scalar value representing the sum of the initial variance plus the variance for each term in the linear
+    combination of non-central chi-squared random variables.
+    """
+    variance = initialVariance + sum(
+                   [
+                        linearCombinationConstantCoeffs[i]**2 *
+                        (2*degreesOfFreedom[i] + 4*nonCentralities[i]) for i in range(len(degreesOfFreedom))
+                   ]
+               )
+    return variance
+
+
+
+def isInputValid(degreesOfFreedom, nonCentralities):
+    """
+    Checks whether input for our linear combination of Chi Squared terms is valid and returns a boolean value as appropriate.
+
+    :param degreesOfFreedom:  List (vector) of degrees of freedom (n in IML)
+    :param nonCentralities:  List (vector) of non-centrality parameters (anc in IML)
+    :return: boolean value describing the validity of the input for linear combination of Chi squared terms
+    """
+    if not all(i >= 0 for i in degreesOfFreedom):
+        return False, 'Cannot have negative degrees of freedom.'
+    if not all(i >= 0 for i in nonCentralities):
+        return False, 'Non centrality parameters cannot be negative'
+    return True, 'OK'
