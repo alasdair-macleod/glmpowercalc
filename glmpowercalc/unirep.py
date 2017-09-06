@@ -81,7 +81,7 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
         sd = sd + (alj ** 2) * (2 * nj + 4 * ancj)
         amean = amean + alj * (nj + ancj)
         if almax >= alj:
-            if almin <= alj:
+            if almin > alj:
                 almin = alj
         else:
             almax = alj

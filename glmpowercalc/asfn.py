@@ -83,6 +83,20 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     amean = sumMeans(linearCombinationConstantCoeffs=alb,
                      degreesOfFreedom=n,
                      nonCentralities=anc)
+    # Find min and max constant coeffs
+    almin, almax = setAlMinMax(alb=alb,
+                               almin=almin,
+                               almax=almax)
+
+
+def setAlMinMax(alb, almin, almax):
+    for alj in alb:
+        if almax >= alj:
+            if almin > alj:
+                almin = alj
+        else:
+            almax = alj
+    return almin, almax
 
 
 def sumMeans(linearCombinationConstantCoeffs,

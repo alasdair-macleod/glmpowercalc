@@ -57,3 +57,67 @@ class TestAs(TestCase):
         actual = asfn.sumMeans(linearCombinationConstantCoeffs, degreesOfFreedom, nonCentralities)
         self.assertEqual(expected, actual)
 
+    def test_alMax(self):
+        alb = [1, 2, 3]
+        almin = 0
+        almax = 0
+
+        expectedMin = 0
+        expectedMax = 3
+        actualMin, actualMax = asfn.setAlMinMax(alb, almin, almax)
+
+        self.assertEqual(expectedMax, actualMax)
+        self.assertEqual(expectedMin, actualMin)
+
+    def test_alMax_oneNeg(self):
+        alb = [-1, 2, 3]
+        almin = 0
+        almax = 0
+
+        expectedMin = -1
+        expectedMax = 3
+        actualMin, actualMax = asfn.setAlMinMax(alb, almin, almax)
+
+        self.assertEqual(expectedMax, actualMax)
+        self.assertEqual(expectedMin, actualMin)
+
+    def test_alMax_allNeg(self):
+        alb = [-1, -2, -3]
+        almin = 0
+        almax = 0
+
+        expectedMin = -3
+        expectedMax = 0
+        actualMin, actualMax = asfn.setAlMinMax(alb, almin, almax)
+
+        self.assertEqual(expectedMax, actualMax)
+        self.assertEqual(expectedMin, actualMin)
+
+    def test_alMax_allZero(self):
+        alb = [0, 0, 0]
+        almin = 0
+        almax = 0
+
+        expectedMin = 0
+        expectedMax = 0
+        actualMin, actualMax = asfn.setAlMinMax(alb, almin, almax)
+
+        self.assertEqual(expectedMax, actualMax)
+        self.assertEqual(expectedMin, actualMin)
+
+    def test_alMax_allZero(self):
+        alb = [-1, 0, 1]
+        almin = 0
+        almax = 0
+
+        expectedMin = -1
+        expectedMax = 1
+        actualMin, actualMax = asfn.setAlMinMax(alb, almin, almax)
+
+        self.assertEqual(expectedMax, actualMax)
+        self.assertEqual(expectedMin, actualMin)
+
+
+
+
+
