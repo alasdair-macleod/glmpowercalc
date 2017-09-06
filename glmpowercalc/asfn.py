@@ -1,5 +1,5 @@
 import numpy as np
-from glmpowercalc.unirep import Countr
+from glmpowercalc.unirep import Countr, findu, cfe, truncn
 
 def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     """
@@ -87,6 +87,52 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     almin, almax = setAlMinMax(alb=alb,
                                almin=almin,
                                almax=almax)
+    # Special case: zero sum of variances
+    if sd == 0:
+        if c == 0:
+            qf = 1
+        else:
+            qf = 0
+        return qf
+
+    # Invalid input: all terms zero
+    if almin == 0 and almax == 0 and sigma ==0:
+        #TODO: improve this error message
+        raise Exception('All terms in linear combination are zero. This needs a better error message.')
+        return None
+
+    # make sd actually equal standard devistion, as it is named...
+    sd = np.sqrt(sd)
+
+    # Set new local value almx, which is the largest absolute value
+    # in the constant coefficients of the linear combination
+    almx = max(almax, -almin)
+
+    # Define starting values for modules FINDU and CTFF;
+    utx = 16 / sd  # In powerlib, it is 16#inv(sd), matrix form
+    up = 4.5 / sd
+    un = -up
+
+    # Calculate the Truncation point without any convergence factor
+    utx = findu(utx,n,alb,anc,0.5 * acc1,lim,icount,sigsq,ir)
+
+    #Special Case: Does Convergence Factor help???
+    #TODO: What are these special cases ???
+    if c != 0 and almx > 0.07 * sd:
+        fail, cfe1 = cfe(n, alb, anc, ith, c, lim, icount, ndtsrt, ir)
+        tausq = 0.25 * acc1 / cfe1
+        # Fail is True if the convergence factor test produces unreasonable values.
+        # Reset fail if tru as it is used later
+        if fail:
+            fail = False
+        #if convergence factor does produce reasonable values, Do some stuff....
+        else:
+            if truncn(n, alb, anc, utx, tausq, lim, icount, sigsq, ir) < 0.2 * acc1:
+                sigsq = sigsq + tausq
+                utx = findu(utx, n, alb, anc, 0.25 * acc1, lim, icount, sigsq, ir)
+                trace[5] = np.sqrt(tausq)
+    trace[4] = utx
+    acc1 = 0.5 * acc1
 
 
 def setAlMinMax(alb, almin, almax):

@@ -92,6 +92,7 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
             qf = 1
         else:
             qf = 0
+
     else:
         if almin == 0 and almax == 0 and sigma == 0:
             ifault = 3
@@ -109,6 +110,10 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
 
             # Calculate the Truncation point without any convergence factor
             utx = findu(utx,n,alb,anc,0.5 * acc1,lim,icount,sigsq,ir)
+
+            ##############################
+            ## DONE UP TO HERE :) ##
+            ##############################
 
             if c != 0 and almx > 0.07 * sd:
                 fail, cfe1 = cfe(n,alb,anc,ith,c,lim,icount,ndtsrt,ir)
