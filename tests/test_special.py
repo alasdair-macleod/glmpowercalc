@@ -3,9 +3,9 @@ import numpy as np
 from glmpowercalc.calculation_state import CalculationState
 from glmpowercalc.special import special
 
-class TestPbt(TestCase):
+class TestSpecial(TestCase):
 
-    def test_pbt(self):
+    def test_Special1(self):
         """
         This should return the expected value
         """
@@ -13,9 +13,29 @@ class TestPbt(TestCase):
         expected = (0.52768, 0.69772, 0.86495)
         powerwarn = CalculationState(0.0001)
         eval_HINVE = np.array([0.6])
-        result = special(2, 1, 2, 5, eval_HINVE, 0.5, [4, 2, 2], [0,0,0,0,0],
+        result = special(2, 1, 2, 5, eval_HINVE, 0.5,
                      1, 5, 2, 0.048, 0.052, 0.0001, powerwarn)
         actual = (np.round(result[0], 5),
                   np.round(result[1], 5),
                   np.round(result[2], 5))
         self.assertEqual(expected, actual)
+
+    def test_special2(self):
+        """
+        if eval_HINVE is missing, then power will be missing.
+        """
+        powerwarn = CalculationState(0.0001)
+        eval_HINVE=np.array([float('nan')])
+        actual = special(2, 1, 2, 5, eval_HINVE, 0.5,
+                     1, 5, 2, 0.048, 0.052, 0.0001, powerwarn)
+        self.assertTrue(np.isnan(actual))
+
+    def test_special3(self):
+        """
+        if df2 <= 0, then power will be missing.
+        """
+        powerwarn = CalculationState(0.0001)
+        eval_HINVE=np.array([float('nan')])
+        actual = special(2, 1, 2, 1, eval_HINVE, 0.5,
+                     1, 5, 2, 0.048, 0.052, 0.0001, powerwarn)
+        self.assertTrue(np.isnan(actual))
