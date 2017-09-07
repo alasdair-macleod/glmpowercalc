@@ -146,26 +146,3 @@ class TestUnirep(TestCase):
                             ir=3)
         result = (actual[0], round(actual[1], 7))
         self.assertEqual(result, expected)
-
-    def test_AS(self):
-        """ should return expected value """
-        expected = (0,
-                    np.array([0, 0, 0, 0, 0.3538992, 0.0035031, 19]),
-                    0,
-                    19)
-        actual = unirep.AS(irr=3,
-                           lim1=100,
-                           alb=np.array([2, 3, 4]),
-                           sigma=1,
-                           cc=0.5,
-                           acc=0.001,
-                           anc=[1, 2, 3],
-                           n=[2, 3, 5],
-                           ith=[1, 1, 1],
-                           prnt_prob=True,
-                           error_chk=True)
-        result = (actual[0],
-                  np.round(actual[1], 7),
-                  actual[2],
-                  actual[3])
-        self.assertEqual(result, expected)

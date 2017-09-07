@@ -463,7 +463,9 @@ def truncn(n, alb, anc, uu, tausq, lim, icount, sigsq, ir):
         ancj = anc[j - 1]
         nj = n[j - 1]
         x = (u * alj) ** 2
+        print("X = {0}".format(x))
         sum1 = sum1 + ancj * x / (1 + x)
+        print("Sum1 = {0}".format(x))
         if x > 1:
             prod2 = prod2 + nj * np.log(x)
             prod3 = prod3 + nj * alog1(x, True)

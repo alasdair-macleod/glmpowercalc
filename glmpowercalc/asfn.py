@@ -70,10 +70,9 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     j = 1
 
     #Check validity of input
-    valid, msg = isInputValid(n, anc)[0]
+    valid, msg = isInputValid(n, anc)
     if not valid:
         raise Exception(msg)
-        return None
     # Calculate sum of initial sd + variance for each term in linear combination
     sd = sumVariances(initialVariance = sd,
                       linearCombinationConstantCoeffs=alb,
@@ -84,9 +83,9 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
                      degreesOfFreedom=n,
                      nonCentralities=anc)
     # Find min and max constant coeffs
-    almin, almax = setAlMinMax(alb=alb,
-                               almin=almin,
-                               almax=almax)
+    almin, almax = getMinMaxConstCoefficients(coefficients=alb,
+                                              min=almin,
+                                              max=almax)
     # Special case: zero sum of variances
     if sd == 0:
         if c == 0:
@@ -135,19 +134,33 @@ def AS(irr, lim1, alb, sigma, cc, acc, anc, n, ith, prnt_prob, error_chk):
     acc1 = 0.5 * acc1
 
 
-def setAlMinMax(alb, almin, almax):
-    for alj in alb:
-        if almax >= alj:
-            if almin > alj:
-                almin = alj
+def getMinMaxConstCoefficients(coefficients, min, max):
+    """Returns the greatest and smallest values in the vector of coefficients
+        or the input values, if they are greater/smaller accordingly.
+
+        :param coefficients: a list of constant coefficients used in the linear combination of
+        non-central chi-squared random variables.
+        :param min: user defined min. If min is smaller than the smallest value in coefficients, min will be returned.
+        :param max: user defined max. If max is greater than the largerst value in coefficients, max will be returned.
+        """
+    for alj in coefficients:
+        if max >= alj:
+            if min > alj:
+                min = alj
         else:
-            almax = alj
-    return almin, almax
+            max = alj
+    return min, max
 
 
 def sumMeans(linearCombinationConstantCoeffs,
             degreesOfFreedom,
             nonCentralities):
+    """Returns the sum of the mean of each term in the inear combination of
+        non-central chi-squared random variables where the mean is k + lambda
+        :param linearCombinationConstantCoeffs: the constant multipliers in the linear combination (beta)
+        :param degreesOfFreedom: k - the list (vector) of degrees of freedom.
+        :param nonCentralities: lambda -  list (vector) of non centrality parameters in linear combination of
+        non-central chi-squared random variables."""
     sumofmeans = sum([
         linearCombinationConstantCoeffs[i] * (degreesOfFreedom[i] + nonCentralities[i])
         for i in range(len(degreesOfFreedom))
