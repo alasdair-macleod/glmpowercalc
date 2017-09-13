@@ -146,3 +146,18 @@ class TestUnirep(TestCase):
                             ir=3)
         result = (actual[0], round(actual[1], 7))
         self.assertEqual(result, expected)
+
+    def test_cfe2(self):
+        """ should return expected value """
+        expected = (False, 0.3183099)
+        actual = unirep.cfe(n=[2, 3, 5],
+                            alb=np.array([2, 3, 4]),
+                            anc=[1, 2, 3],
+                            ith=[1, 1, 1],
+                            x=-1,
+                            lim=10,
+                            icount=unirep.Countr(),
+                            ndtsrt=True,
+                            ir=3)
+        result = (actual[0], round(actual[1], 7))
+        self.assertEqual(result, expected)

@@ -632,13 +632,13 @@ def cfe(n, alb, anc, ith, x, lim, icount, ndtsrt, ir):
     sxl = x / abs(x)
     sum1 = 0
     j = ir
+    aln28 = np.log(2) / 8
 
     while j > 0:
         it = ith[j - 1]
         if alb[it - 1] * sxl > 0:
             alj = abs(alb[it - 1])
             axl1 = axl - alj * (n[it - 1] + anc[it - 1])
-            aln28 = np.log(2) / 8
             axl2 = alj / aln28
             if axl1 > axl2:
                 axl = axl1
