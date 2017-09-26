@@ -1,6 +1,6 @@
 import numpy as np
 
-def firstuni(sigmastar, rank_U, tolerance):
+def firstuni(sigmastar, rank_U):
     """
     This module produces matrices required for Geisser-Greenhouse,
     Huynh-Feldt or uncorrected repeated measures power calculations. It
@@ -11,16 +11,15 @@ def firstuni(sigmastar, rank_U, tolerance):
 
     :param sigmastar: U` * (SIGMA # SIGSCALTEMP) * U
     :param rank_U: rank of U matrix
-    :param tolerance:
 
     :return:
-        D, number of distinct eigenvalues
-        MTP, multiplicities of eigenvalues
-        EPS, epsilon calculated from U`*SIGMA*U
-        DEIGVAL, first eigenvalue
-        SLAM1, sum of eigenvalues squared
-        SLAM2, sum of squared eigenvalues
-        SLAM3, sum of eigenvalues
+        d, number of distinct eigenvalues
+        mtp, multiplicities of eigenvalues
+        eps, epsilon calculated from U`*SIGMA*U
+        deigval, first eigenvalue
+        slam1, sum of eigenvalues squared
+        slam2, sum of squared eigenvalues
+        slam3, sum of eigenvalues
     """
 
     #Get eigenvalues of covariance matrix associated with E. This is NOT
@@ -33,23 +32,35 @@ def firstuni(sigmastar, rank_U, tolerance):
     slam3 = np.sum(seigval)
     eps = slam1 / (rank_U * slam2)
 
-    # Decide which eigenvalues are distinct
-    d = 1
-    mtp = [1]
-    deigval = seigval[0]
-    for cnt in range(2, rank_U):
-        if deigval[d-1] - seigval[cnt-1] > tolerance:
-            d = d + 1
-            deigval = np.append(deigval, seigval[cnt-1])
-            mtp = np.append(mtp, 1)
-        else:
-            mtp[d-1] = mtp[d-1] + 1
+    deigval_low_high_order, mtp = np.unique(seigval, return_counts=True)
+    deigval = deigval_low_high_order[::-1]
+    d = len(deigval)
 
     return d, mtp, eps, deigval, slam1, slam2, slam3
 
 
+def hfexeps(sigmastar, rank_U, tolerance, total_N, rank_X, u_methodtemp):
+    """
 
+    Univariate, HF STEP 2:
+    This function computes the approximate expected value of
+    the Huynh-Feldt estimate.
 
+      FK  = 1st deriv of FNCT of eigenvalues
+      FKK = 2nd deriv of FNCT of eigenvalues
+      For HF, FNCT is epsilon tilde
 
+    :param sigmastar:
+    :param rank_U:
+    :param tolerance:
+    :param total_N:
+    :param rank_X:
+    :param u_methodtemp:
+    :return:
+    """
+    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
+                                                         rank_U=rank_U)
 
+    h1 = total_N * slam1 - 2 * slam2
+    h2 = (total_N - rank_X) * slam2 - slam1
 
