@@ -88,7 +88,7 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
         tm2 = t4 - t4.T
         tm2inv = 1 / (tm2 + np.identity(d)) - np.identity(d)
         tm3 = np.multiply(tm1, tm2inv)
-        sum2 = sum(tm3)
+        sum2 = np.sum(tm3)
 
     # Define HF Approx E(.) for Method 0
     e0epshf = h1 / (rank_U * h2) + (sum1 + sum2) / (total_N - rank_X)
@@ -117,4 +117,98 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
         exeps = e1epshf
 
     return exeps
+
+
+def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+    """
+    Univariate, HF STEP 2 with Chi-Muller:
+    This function computes the approximate expected value of
+    the Huynh-Feldt estimate with the Chi-Muller results
+
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+
+    exeps = hfexeps(sigmastar=sigmastar,
+                    rank_U=rank_U,
+                    total_N=total_N,
+                    rank_X=rank_X,
+                    u_method=u_method)
+
+    if total_N - rank_X == 1:
+        uefactor = 1
+    else:
+        nu_e = total_N - rank_X
+        nu_a = (nu_e - 1) + nu_e * (nu_e - 1) / 2
+        uefactor = (nu_a - 2) * (nu_a - 4) / (nu_a ** 2)
+
+    exeps = uefactor * exeps
+
+    return exeps
+
+def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+    """
+    Univariate, GG STEP 2:
+    This function computes the approximate expected value of the
+    Geisser-Greenhouse estimate.
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
+                                                         rank_U=rank_U)
+
+    fk = np.full((d,1), 1) * 2 * slam3 / (slam2 * rank_U) - 2 * deigval * slam1 / (rank_U * slam2 ** 2)
+    c0 = 1 - slam1 / slam2
+    c1 = -4 * slam3 / slam2
+    c2 = 4 * slam1 / slam2 ** 2
+    fkk = 2 * (c0 * np.full((d, 1), 1) + c1 * deigval + c2 * np.power(deigval, 2)) / (rank_U * slam2)
+    t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
+    sum1 = np.sum(t1)
+
+    if d == 1:
+        sum2 =0
+    else:
+        t2 = np.multiply(np.multiply(fk, deigval), mtp)
+        t3 = np.multiply(deigval, mtp)
+        tm1 = t2 * t3.T
+        t4 = deigval * np.full((1, d), 1)
+        tm2 = t4 - t4.T
+        tm2inv = 1 / (tm2 + np.identity(d)) - np.identity(d)
+        tm3 = np.multiply(tm1, tm2inv)
+        sum2 = np.sum(tm3)
+
+    # Define GG Approx E(.) for Method 0
+    e0epsgg = eps + (sum1 + sum2) / (total_N - rank_X)
+
+    # Computation of EXP(T1) and EXP(T2)
+    esig = sigmastar / np.trace(sigmastar)
+    seval = np.matrix(np.linalg.eigvals(esig)).T
+
+    nu = total_N - rank_X
+    expt1 = 2 * nu * slam2 + nu ** 2 * slam1
+    expt2 = nu * (nu + 1) * slam2 + nu * np.sum(seval * seval.T)
+
+    # Define GG Approx E(.) for Method 1
+    e1epsgg = (1 / rank_U) * (expt1 / expt2)
+
+    # u_method
+    # =1 --> Muller and Barton (1989) approximation
+    # =2 --> Method 1, Muller, Edwards, and Taylor (2004)
+    if u_method == 1:
+        exeps = e0epsgg
+    elif u_method == 2:
+        exeps = e1epsgg
+
+    return exeps
+
 
