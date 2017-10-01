@@ -1,4 +1,6 @@
 import numpy as np
+from glmpowercalc.finv import finv
+from glmpowercalc.probf import probf
 
 
 def firstuni(sigmastar, rank_U):
@@ -212,3 +214,61 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     return exeps
 
 
+def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
+            error_sum_square, hypo_sum_square, sig_type, ip_plan,
+            cdfpowercalc, n_est, rank_est,
+            exep, powercacl, eps, alpha_scale, powerwarn):
+    """
+    Univariate STEP 3
+    This module performs the final step for univariate repeated measures power calculations.
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+
+    fmethod = 0
+    nue = total_N - rank_X
+
+    if rank_U > nue and powercacl in (5, 8, 9):
+        powerwarn.directfwarn(23)
+        raise Exception("#TODO what kind of exception")
+
+    if np.isnan(exeps) or nue <= 0:
+        raise Exception("exeps is NaN or total_N  <= rank_X")
+
+    # Create defaults - same for either SIGMA known or estimated
+    sigstar = error_sum_square/nue
+    q1 = np.trace(sigstar)
+    q2 = np.trace(hypo_sum_square)
+    q3 = q1 ** 2
+    q4 = np.sum(np.power(sigmastar, 2))
+    q5 = np.trace(sigstar * hypo_sum_square)
+    lambar = q1 / rank_U
+
+    # Case 1
+    # Enter loop to compute E1-E5 based on known SIGMA
+    if sig_type == 0 and ip_plan == 0:
+        epsn_num = q3 + q1 * q2 * 2 / rank_C
+        epsn_den = q4 + q5 * 2 /rank_C
+        epsn = epsn_num / (rank_U * epsn_den)
+        e_1_2 = exeps
+        e_4 = eps
+        if cdfpowercalc == 1:
+            e_3_5 = eps
+        else:
+            e_3_5 = epsn
+
+    # Case 2
+    # Enter loop to compute E1-E5 based on estimated SIGMA
+    if sig_type == 1 and ip_plan == 0:
+        nu_est = n_est - rank_est
+        if nu_est <= 1:
+            raise Exception("ERROR 81: Too few estimation df in LASTUNI. df = N_EST - RANK_EST <= 1.")
+
+        # For POWERCALC =6=HF, =7=CM, =8=GG critical values
+        epstilde_r =  ((nu_est + 1) * q3 - 2 * q4) / (rank_U * (nu_est * q4 - q3))
+        epstilde_rm =
