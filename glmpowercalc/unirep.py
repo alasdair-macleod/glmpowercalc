@@ -271,4 +271,45 @@ def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
 
         # For POWERCALC =6=HF, =7=CM, =8=GG critical values
         epstilde_r =  ((nu_est + 1) * q3 - 2 * q4) / (rank_U * (nu_est * q4 - q3))
-        epstilde_rm =
+        epstilde_r_min = min(epstilde_r)
+        mult = np.power(nu_est, 2) + nu_est - 2
+
+        epsnhat_num = q3 * nu_est * (nu_est + 1) + q1 * q2 * 2 * mult / rank_C - q4 * 2 * nu_est
+        epsnhat_den = q4 * nu_est * nu_est + q5 * 2 * mult / rank_C - q3 * nu_est
+        epsnhat = epsnhat_num / (rank_U * epsnhat_den)
+
+        nua0 = (nu_est - 1) + nu_est * (nu_est - 1) / 2
+        tau10 = nu_est * ((nu_est + 1) * q1 * q1 - 2 * q4) / (nu_est * nu_est + nu_est - 2)
+        tau20 = nu_est * (nu_est * q4 - q1 * q1) / (nu_est * nu_est + nu_est - 2)
+
+        epsda = tau10 * (nua0 - 2) * (nua0 - 4) / (b * nua0 * nua0 * tau20)
+        epsda = max(min(epsda), 1 / rank_U)
+        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1/epsda + 2 * b * (q5 / rank_C) / (q1 * q1))
+        omegaua = q2 * epsna * (rank_U / q1)
+
+        # Set E_1_2 for all tests
+
+        # for UN or Box critical values
+        if powercacl in (5, 9):
+            e_1_2 = epsda
+
+        # for HF crit val
+        if powercacl == 6:
+            if rank_U <= nue:
+                e_1_2 = epstilde_r_min
+            else:
+                e_1_2 = epsda
+
+        # for CM crit val
+        if powercacl == 7:
+            e_1_2 = epsda
+
+        # for GG crit val
+        if powercacl == 8:
+            e_1_2 = eps
+
+
+        # Set E_3_5 for all tests
+        if cdfpowercalc == 1:
+            e_3_5 = eps
+        
