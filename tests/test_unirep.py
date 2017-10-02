@@ -39,3 +39,24 @@ class TestUnirep(TestCase):
                                 rank_X=5,
                                 u_method=2)
         self.assertAlmostEqual(actual, expected, places=7)
+
+    def test_cmexeps(self):
+        """ should return expected value """
+        expected = 0.2757015
+        actual = unirep.cmexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+                                rank_U=3,
+                                total_N=20,
+                                rank_X=5,
+                                u_method=2)
+        self.assertAlmostEqual(actual, expected, places=7)
+
+    def test_ggexeps(self):
+        """ should return expected value """
+        expected = 0.2975125
+        actual = unirep.ggexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+                                rank_U=3,
+                                total_N=20,
+                                rank_X=5,
+                                u_method=2)
+        self.assertAlmostEqual(actual, expected, delta=0.0000001)
+
