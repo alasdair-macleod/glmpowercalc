@@ -1,4 +1,6 @@
 import numpy as np
+from glmpowercalc.finv import finv
+from glmpowercalc.probf import probf
 
 
 def firstuni(sigmastar, rank_U):
@@ -212,4 +214,102 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     return exeps
 
 
-def lastuni()
+def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
+            error_sum_square, hypo_sum_square, sig_type, ip_plan,
+            cdfpowercalc, n_est, rank_est,
+            exep, powercacl, eps, alpha_scale, powerwarn):
+    """
+    Univariate STEP 3
+    This module performs the final step for univariate repeated measures power calculations.
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+
+    fmethod = 0
+    nue = total_N - rank_X
+
+    if rank_U > nue and powercacl in (5, 8, 9):
+        powerwarn.directfwarn(23)
+        raise Exception("#TODO what kind of exception")
+
+    if np.isnan(exeps) or nue <= 0:
+        raise Exception("exeps is NaN or total_N  <= rank_X")
+
+    # Create defaults - same for either SIGMA known or estimated
+    sigstar = error_sum_square/nue
+    q1 = np.trace(sigstar)
+    q2 = np.trace(hypo_sum_square)
+    q3 = q1 ** 2
+    q4 = np.sum(np.power(sigmastar, 2))
+    q5 = np.trace(sigstar * hypo_sum_square)
+    lambar = q1 / rank_U
+
+    # Case 1
+    # Enter loop to compute E1-E5 based on known SIGMA
+    if sig_type == 0 and ip_plan == 0:
+        epsn_num = q3 + q1 * q2 * 2 / rank_C
+        epsn_den = q4 + q5 * 2 /rank_C
+        epsn = epsn_num / (rank_U * epsn_den)
+        e_1_2 = exeps
+        e_4 = eps
+        if cdfpowercalc == 1:
+            e_3_5 = eps
+        else:
+            e_3_5 = epsn
+
+    # Case 2
+    # Enter loop to compute E1-E5 based on estimated SIGMA
+    if sig_type == 1 and ip_plan == 0:
+        nu_est = n_est - rank_est
+        if nu_est <= 1:
+            raise Exception("ERROR 81: Too few estimation df in LASTUNI. df = N_EST - RANK_EST <= 1.")
+
+        # For POWERCALC =6=HF, =7=CM, =8=GG critical values
+        epstilde_r =  ((nu_est + 1) * q3 - 2 * q4) / (rank_U * (nu_est * q4 - q3))
+        epstilde_r_min = min(epstilde_r)
+        mult = np.power(nu_est, 2) + nu_est - 2
+
+        epsnhat_num = q3 * nu_est * (nu_est + 1) + q1 * q2 * 2 * mult / rank_C - q4 * 2 * nu_est
+        epsnhat_den = q4 * nu_est * nu_est + q5 * 2 * mult / rank_C - q3 * nu_est
+        epsnhat = epsnhat_num / (rank_U * epsnhat_den)
+
+        nua0 = (nu_est - 1) + nu_est * (nu_est - 1) / 2
+        tau10 = nu_est * ((nu_est + 1) * q1 * q1 - 2 * q4) / (nu_est * nu_est + nu_est - 2)
+        tau20 = nu_est * (nu_est * q4 - q1 * q1) / (nu_est * nu_est + nu_est - 2)
+
+        epsda = tau10 * (nua0 - 2) * (nua0 - 4) / (b * nua0 * nua0 * tau20)
+        epsda = max(min(epsda), 1 / rank_U)
+        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1/epsda + 2 * b * (q5 / rank_C) / (q1 * q1))
+        omegaua = q2 * epsna * (rank_U / q1)
+
+        # Set E_1_2 for all tests
+
+        # for UN or Box critical values
+        if powercacl in (5, 9):
+            e_1_2 = epsda
+
+        # for HF crit val
+        if powercacl == 6:
+            if rank_U <= nue:
+                e_1_2 = epstilde_r_min
+            else:
+                e_1_2 = epsda
+
+        # for CM crit val
+        if powercacl == 7:
+            e_1_2 = epsda
+
+        # for GG crit val
+        if powercacl == 8:
+            e_1_2 = eps
+
+
+        # Set E_3_5 for all tests
+        if cdfpowercalc == 1:
+            e_3_5 = eps
+        
