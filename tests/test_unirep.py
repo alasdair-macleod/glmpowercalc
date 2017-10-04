@@ -4,146 +4,59 @@ from glmpowercalc import unirep
 
 
 class TestUnirep(TestCase):
-    def test_Countr(self):
-        """ The value of the object should equal to expected"""
-        icount = unirep.Countr()
-        icount.counting(5)
-        expected = 1
-        actual = icount.count
-        self.assertEqual(actual, expected)
+    def test_Firstuni1(self):
+        """ The value of the object should equal to expected """
+        expected = (2,
+                    np.array([1, 1]),
+                    0.4310345,
+                    np.array([-0.074456, 1.0744563]),
+                    1,
+                    1.16,
+                    1)
+        actual = unirep.firstuni(sigmastar=np.matrix([[1, 2], [3, 4]]),
+                                 rank_U=2)
+        self.assertEqual(actual[0], expected[0])
+        self.assertTrue((actual[1] == expected[1]).all())
+        self.assertAlmostEqual(actual[2], expected[2], places=7)
+        self.assertAlmostEqual(actual[3][0], expected[3][0], delta=0.000001)
+        self.assertAlmostEqual(actual[3][1], expected[3][1], delta=0.000001)
+        self.assertAlmostEqual(actual[4], expected[4], places=7)
+        self.assertAlmostEqual(actual[5], expected[5], places=7)
+        self.assertAlmostEqual(actual[6], expected[6], places=7)
 
-    def test_alog1_1(self):
-        """ for abs(x) <= 0.1  and first = True """
-        expected = 0.0099503
-        actual = unirep.alog1(0.01, True)
-        result = round(actual, 7)
-        self.assertEqual(result, expected)
+    def test_Firstuni2(self):
+        """ should raise error """
+        with self.assertRaises(Exception):
+            actual = unirep.firstuni(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+                                     rank_U=2)
 
-    def test_alog1_2(self):
-        """ for abs(x) <= 0.1  and first = False """
-        expected = -0.00005
-        actual = unirep.alog1(0.01, False)
-        result = round(actual, 5)
-        self.assertEqual(result, expected)
-
-    def test_alog1_3(self):
-        """ for abs(x) > 0.1  and first = True """
-        expected = 0.6931472
-        actual = unirep.alog1(1, True)
-        result = round(actual, 7)
-        self.assertEqual(result, expected)
-
-    def test_alog1_4(self):
-        """ for abs(x) > 0.1  and first = False """
-        expected = -0.306853
-        actual = unirep.alog1(1, False)
-        result = round(actual, 6)
-        self.assertEqual(result, expected)
-
-    def test_exp1(self):
+    def test_hfexeps(self):
         """ should return expected value """
-        expected = 0
-        actual = unirep.exp1(-706)
-        self.assertEqual(actual, expected)
+        expected = 0.2901679
+        actual = unirep.hfexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+                                rank_U=3,
+                                total_N=20,
+                                rank_X=5,
+                                u_method=2)
+        self.assertAlmostEqual(actual, expected, places=7)
 
-    def test_order(self):
+    def test_cmexeps(self):
         """ should return expected value """
-        expected = (np.array([1, 3, 6, 5, 2, 4]) - 1, False)
-        actual = unirep.order(np.array([1, 3, 9, 6, 2, 5]))
-        self.assertTrue((actual[0] == expected[0]).all())
-        self.assertEqual(actual[1], expected[1])
+        expected = 0.2757015
+        actual = unirep.cmexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+                                rank_U=3,
+                                total_N=20,
+                                rank_X=5,
+                                u_method=2)
+        self.assertAlmostEqual(actual, expected, places=7)
 
-    def test_errbd(self):
+    def test_ggexeps(self):
         """ should return expected value """
-        expected = (0.0050939, 8.1605556)
-        actual = unirep.errbd(n=[2, 3, 5],
-                              alb=[2, 3, 4],
-                              anc=[1, 2, 3],
-                              uu=-0.5,
-                              lim=10,
-                              icount=unirep.Countr(),
-                              sigsq=1,
-                              ir=3)
-        result = (round(actual[0], 7),
-                  round(actual[1], 7))
-        self.assertEqual(result, expected)
-
-    def test_ctff(self):
-        """ should return expected value """
-        expected = (-0.25, 11.09186)
-        actual = unirep.ctff(upn=-0.5,
-                             n=[2, 3, 5],
-                             alb=[2, 3, 4],
-                             anc=[1, 2, 3],
-                             accx=0.05,
-                             amean=1,
-                             almin=0.6,
-                             almax=0.8,
-                             lim=10,
-                             icount=unirep.Countr(),
-                             sigsq=1,
-                             ir=3)
-        result = (actual[0], round(actual[1], 5))
-        self.assertEqual(result, expected)
-
-    def test_truncn(self):
-        """ should return expected value """
-        expected = 0.0000105
-        actual = unirep.truncn(n=[2, 3, 5],
-                               alb=[2, 3, 4],
-                               anc=[1, 2, 3],
-                               uu=-0.5,
-                               tausq=0.5,
-                               lim=10,
-                               icount=unirep.Countr(),
-                               sigsq=1,
-                               ir=3)
-        result = round(actual, 7)
-        self.assertEqual(result, expected)
-
-    def test_findu(self):
-        """ should return expected value """
-        expected = -0.135281
-        actual = unirep.findu(utx=-0.5,
-                              n=[2, 3, 5],
-                              alb=[2, 3, 4],
-                              anc=[1, 2, 3],
-                              accx=0.05,
-                              lim=10,
-                              icount=unirep.Countr(),
-                              sigsq=1,
-                              ir=3)
-        result = round(actual, 6)
-        self.assertEqual(result, expected)
-
-    def test_integr(self):
-        """ should return expected value """
-        expected = (0.0000496, 0.0006364)
-        actual = unirep.integr(n=[2, 3, 5],
-                               alb=[2, 3, 4],
-                               anc=[1, 2, 3],
-                               nterm=10,
-                               aintrv=1,
-                               tausq=1,
-                               main=True,
-                               c=0.5,
-                               sigsq=1,
-                               ir=3)
-        result = (round(actual[0], 7), round(actual[1], 7))
-        self.assertEqual(result, expected)
-
-    def test_cfe(self):
-        """ should return expected value """
-        expected = (False, 5.0929582)
-        actual = unirep.cfe(n=[2, 3, 5],
-                            alb=np.array([2, 3, 4]),
-                            anc=[1, 2, 3],
-                            ith=[1, 1, 1],
-                            x=1,
-                            lim=10,
-                            icount=unirep.Countr(),
-                            ndtsrt=True,
-                            ir=3)
-        result = (actual[0], round(actual[1], 7))
-        self.assertEqual(result, expected)
+        expected = 0.2975125
+        actual = unirep.ggexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+                                rank_U=3,
+                                total_N=20,
+                                rank_X=5,
+                                u_method=2)
+        self.assertAlmostEqual(actual, expected, delta=0.0000001)
 

@@ -1,416 +1,315 @@
 import numpy as np
-import sys
+from glmpowercalc.finv import finv
+from glmpowercalc.probf import probf
 
 
-class Countr(object):
-    """ object to hold number of calls of Countr"""
+def firstuni(sigmastar, rank_U):
+    """
+    This module produces matrices required for Geisser-Greenhouse,
+    Huynh-Feldt or uncorrected repeated measures power calculations. It
+    is the first step. Program uses approximations of expected values of
+    epsilon estimates due to Muller (1985), based on theorem of Fujikoshi
+    (1978). Program requires that U be orthonormal and orthogonal to a
+    columns of 1's.
 
-    def __init__(self):
-        self.count = 0
+    :param sigmastar: U` * (SIGMA # SIGSCALTEMP) * U
+    :param rank_U: rank of U matrix
 
-    def counting(self, lim):
-        """
-        This module counts number of calls to ERRBD(), TRUNCN(), and CFE().
-        :param lim: Maximum number of integration terms
-        :return:
-        """
-        if self.count > lim:
-            sys.exit("QF: CANNOT LOCATE INTEGRATION PARAMETERS")
+    :return:
+        d, number of distinct eigenvalues
+        mtp, multiplicities of eigenvalues
+        eps, epsilon calculated from U`*SIGMA*U
+        deigval, first eigenvalue
+        slam1, sum of eigenvalues squared
+        slam2, sum of squared eigenvalues
+        slam3, sum of eigenvalues
+    """
+
+    if rank_U != np.shape(sigmastar)[0]:
+        raise Exception("rank of U should equal to nrows of sigmastar")
+
+    # Get eigenvalues of covariance matrix associated with E. This is NOT
+    # the USUAL sigma. This cov matrix is that of (Y-YHAT)*U, not of (Y-YHAT).
+    # The covariance matrix is normalized to minimize numerical problems
+    esig = sigmastar / np.trace(sigmastar)
+    seigval = np.linalg.eigvals(esig)
+    slam1 = np.sum(seigval) ** 2
+    slam2 = np.sum(np.square(seigval))
+    slam3 = np.sum(seigval)
+    eps = slam1 / (rank_U * slam2)
+
+    deigval_array, mtp_array = np.unique(seigval, return_counts=True)
+    d = len(deigval_array)
+
+    deigval = np.matrix(deigval_array).T
+    mtp     = np.matrix(mtp_array).T
+
+    return d, mtp, eps, deigval, slam1, slam2, slam3
+
+
+def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+    """
+
+    Univariate, HF STEP 2:
+    This function computes the approximate expected value of
+    the Huynh-Feldt estimate.
+
+      FK  = 1st deriv of FNCT of eigenvalues
+      FKK = 2nd deriv of FNCT of eigenvalues
+      For HF, FNCT is epsilon tilde
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
+                                                         rank_U=rank_U)
+
+    # Compute approximate expected value of Huynh-Feldt estimate
+    h1 = total_N * slam1 - 2 * slam2
+    h2 = (total_N - rank_X) * slam2 - slam1
+    derh1 = np.full((d, 1), 2 * total_N * slam3) - 4 * deigval
+    derh2 = 2 * (total_N - rank_X) * deigval - np.full((d, 1), 2 * np.sqrt(slam1))
+    fk = (derh1 - h1 * derh2 / h2) / (rank_U * h2)
+    der2h1 = np.full((d, 1), 2*total_N-4)
+    der2h2 = np.full((d, 1), 2*(total_N-rank_X)-2)
+    fkk = (np.multiply(-derh1, derh2) / h2 + der2h1 - np.multiply(derh1, derh2) / h2 + 2 * h1 * np.power(derh2, 2) / h2 ** 2 - h1 * der2h2 / h2) / (h2 * rank_U)
+    t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
+    sum1 = np.sum(t1)
+
+    if d == 1:
+        sum2 = 0
+    else:
+        t2 = np.multiply(np.multiply(fk, deigval), mtp)
+        t3 = np.multiply(deigval, mtp)
+        tm1 = t2 * t3.T
+        t4 = deigval * np.full((1, d), 1)
+        tm2 = t4 - t4.T
+        tm2inv = 1 / (tm2 + np.identity(d)) - np.identity(d)
+        tm3 = np.multiply(tm1, tm2inv)
+        sum2 = np.sum(tm3)
+
+    # Define HF Approx E(.) for Method 0
+    e0epshf = h1 / (rank_U * h2) + (sum1 + sum2) / (total_N - rank_X)
+
+    # Computation of EXP(T1) and EXP(T2)
+    esig = sigmastar / np.trace(sigmastar)
+    seval = np.matrix(np.linalg.eigvals(esig)).T
+
+    nu = total_N - rank_X
+    expt1 = 2 * nu * slam2 + nu ** 2 * slam1
+    expt2 = nu * (nu + 1) * slam2 + nu * np.sum(seval * seval.T)
+
+    # For use with Method 1
+    num01 = (1 / rank_U) * ((nu + 1) * expt1 - 2 * expt2)
+    den01 = nu * expt2 - expt1
+
+    # Define HF Approx E(.) for Method 1
+    e1epshf = num01 /den01
+
+    # u_method
+    # =1 --> Muller and Barton (1989) approximation
+    # =2 --> Method 1, Muller, Edwards, and Taylor (2004)
+    if u_method == 1:
+        exeps = e0epshf
+    elif u_method == 2:
+        exeps = e1epshf
+
+    return exeps
+
+
+def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+    """
+    Univariate, HF STEP 2 with Chi-Muller:
+    This function computes the approximate expected value of
+    the Huynh-Feldt estimate with the Chi-Muller results
+
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+
+    exeps = hfexeps(sigmastar=sigmastar,
+                    rank_U=rank_U,
+                    total_N=total_N,
+                    rank_X=rank_X,
+                    u_method=u_method)
+
+    if total_N - rank_X == 1:
+        uefactor = 1
+    else:
+        nu_e = total_N - rank_X
+        nu_a = (nu_e - 1) + nu_e * (nu_e - 1) / 2
+        uefactor = (nu_a - 2) * (nu_a - 4) / (nu_a ** 2)
+
+    exeps = uefactor * exeps
+
+    return exeps
+
+def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+    """
+    Univariate, GG STEP 2:
+    This function computes the approximate expected value of the
+    Geisser-Greenhouse estimate.
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
+                                                         rank_U=rank_U)
+
+    fk = np.full((d,1), 1) * 2 * slam3 / (slam2 * rank_U) - 2 * deigval * slam1 / (rank_U * slam2 ** 2)
+    c0 = 1 - slam1 / slam2
+    c1 = -4 * slam3 / slam2
+    c2 = 4 * slam1 / slam2 ** 2
+    fkk = 2 * (c0 * np.full((d, 1), 1) + c1 * deigval + c2 * np.power(deigval, 2)) / (rank_U * slam2)
+    t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
+    sum1 = np.sum(t1)
+
+    if d == 1:
+        sum2 =0
+    else:
+        t2 = np.multiply(np.multiply(fk, deigval), mtp)
+        t3 = np.multiply(deigval, mtp)
+        tm1 = t2 * t3.T
+        t4 = deigval * np.full((1, d), 1)
+        tm2 = t4 - t4.T
+        tm2inv = 1 / (tm2 + np.identity(d)) - np.identity(d)
+        tm3 = np.multiply(tm1, tm2inv)
+        sum2 = np.sum(tm3)
+
+    # Define GG Approx E(.) for Method 0
+    e0epsgg = eps + (sum1 + sum2) / (total_N - rank_X)
+
+    # Computation of EXP(T1) and EXP(T2)
+    esig = sigmastar / np.trace(sigmastar)
+    seval = np.matrix(np.linalg.eigvals(esig)).T
+
+    nu = total_N - rank_X
+    expt1 = 2 * nu * slam2 + nu ** 2 * slam1
+    expt2 = nu * (nu + 1) * slam2 + nu * np.sum(seval * seval.T)
+
+    # Define GG Approx E(.) for Method 1
+    e1epsgg = (1 / rank_U) * (expt1 / expt2)
+
+    # u_method
+    # =1 --> Muller and Barton (1989) approximation
+    # =2 --> Method 1, Muller, Edwards, and Taylor (2004)
+    if u_method == 1:
+        exeps = e0epsgg
+    elif u_method == 2:
+        exeps = e1epsgg
+
+    return exeps
+
+
+def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
+            error_sum_square, hypo_sum_square, sig_type, ip_plan,
+            cdfpowercalc, n_est, rank_est,
+            exep, powercacl, eps, alpha_scale, powerwarn):
+    """
+    Univariate STEP 3
+    This module performs the final step for univariate repeated measures power calculations.
+
+    :param sigmastar:
+    :param rank_U:
+    :param total_N:
+    :param rank_X:
+    :param u_method:
+    :return:
+    """
+
+    fmethod = 0
+    nue = total_N - rank_X
+
+    if rank_U > nue and powercacl in (5, 8, 9):
+        powerwarn.directfwarn(23)
+        raise Exception("#TODO what kind of exception")
+
+    if np.isnan(exeps) or nue <= 0:
+        raise Exception("exeps is NaN or total_N  <= rank_X")
+
+    # Create defaults - same for either SIGMA known or estimated
+    sigstar = error_sum_square/nue
+    q1 = np.trace(sigstar)
+    q2 = np.trace(hypo_sum_square)
+    q3 = q1 ** 2
+    q4 = np.sum(np.power(sigmastar, 2))
+    q5 = np.trace(sigstar * hypo_sum_square)
+    lambar = q1 / rank_U
+
+    # Case 1
+    # Enter loop to compute E1-E5 based on known SIGMA
+    if sig_type == 0 and ip_plan == 0:
+        epsn_num = q3 + q1 * q2 * 2 / rank_C
+        epsn_den = q4 + q5 * 2 /rank_C
+        epsn = epsn_num / (rank_U * epsn_den)
+        e_1_2 = exeps
+        e_4 = eps
+        if cdfpowercalc == 1:
+            e_3_5 = eps
         else:
-            self.count = self.count + 1
+            e_3_5 = epsn
 
+    # Case 2
+    # Enter loop to compute E1-E5 based on estimated SIGMA
+    if sig_type == 1 and ip_plan == 0:
+        nu_est = n_est - rank_est
+        if nu_est <= 1:
+            raise Exception("ERROR 81: Too few estimation df in LASTUNI. df = N_EST - RANK_EST <= 1.")
 
-def alog1(x, first):
-    """
-    For a number X, this function computes either LN(1+x) or LN(1+x)-x
+        # For POWERCALC =6=HF, =7=CM, =8=GG critical values
+        epstilde_r =  ((nu_est + 1) * q3 - 2 * q4) / (rank_U * (nu_est * q4 - q3))
+        epstilde_r_min = min(epstilde_r)
+        mult = np.power(nu_est, 2) + nu_est - 2
 
-    :param x: Number on which to perform computation
-    :param first:
-            = TRUE, when this module is called for a matrix for the first time
-            = FALSE , otherwise
-    :return: alog1
-    """
+        epsnhat_num = q3 * nu_est * (nu_est + 1) + q1 * q2 * 2 * mult / rank_C - q4 * 2 * nu_est
+        epsnhat_den = q4 * nu_est * nu_est + q5 * 2 * mult / rank_C - q3 * nu_est
+        epsnhat = epsnhat_num / (rank_U * epsnhat_den)
 
-    if abs(x) <= 0.1:
-        y = x / (2 + x)
-        term = 2 * y ** 3
-        ak = 3.0
-        if not first:
-            s = -x
-        else:
-            s = 2.0
-        s = s * y
-        y = y ** 2
-        s1 = s + term / ak
-        while s1 != s:
-            ak = ak + 2
-            term = term * y
-            s = s1
-            s1 = s + term / ak
-        alog1 = s
-    elif not first:
-        alog1 = np.log(1 + x) - x
-    else:
-        alog1 = np.log(1 + x)
-    return alog1
+        nua0 = (nu_est - 1) + nu_est * (nu_est - 1) / 2
+        tau10 = nu_est * ((nu_est + 1) * q1 * q1 - 2 * q4) / (nu_est * nu_est + nu_est - 2)
+        tau20 = nu_est * (nu_est * q4 - q1 * q1) / (nu_est * nu_est + nu_est - 2)
 
+        epsda = tau10 * (nua0 - 2) * (nua0 - 4) / (b * nua0 * nua0 * tau20)
+        epsda = max(min(epsda), 1 / rank_U)
+        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1/epsda + 2 * b * (q5 / rank_C) / (q1 * q1))
+        omegaua = q2 * epsna * (rank_U / q1)
 
-def exp1(x):
-    """
-    This function computes e^X for X > -706.
-    :param x: scalar
-    :return:
-            0, if X <= -706
-            e^X, if X > -706
-    """
-    if x <= -706:
-        return 0
-    else:
-        return np.exp(x)
+        # Set E_1_2 for all tests
 
+        # for UN or Box critical values
+        if powercacl in (5, 9):
+            e_1_2 = epsda
 
-def order(alb):
-    """
-    This module finds the ranks of absolute values of elements of ALB.
-    Ties are ranked arbitrarily, e.g., the matrix {2,2} is ranked {1,2}.
-
-    :param alb: IRx1 vector of constant multipliers, np.array
-    :return:
-            ITH, Vector of ranks of absolute values of ALB
-            NDTSRT, = False if this module has been run
-    """
-    ith = abs(alb).argsort().argsort()
-    ndtsrt = False
-    return ith, ndtsrt
-
-
-def errbd(n, alb, anc, uu, lim, icount, sigsq, ir):
-    """
-    This module finds bound on tail probability using moment-generating function
-
-    :param n: Vector of degrees of freedom
-    :param alb: IRx1 vector of constant multipliers
-    :param anc: Vector of noncentrality parameters
-    :param uu:
-    :param lim: Maximum number of integration terms
-    :param icount: Count of number of times this module is called
-    :param sigsq: square of SIGMA, the coefficient of normal term
-    :param ir: Number of chi-squared terms in the sum
-    :return:
-            ERRBD, Bound on tail probability
-            CX,
-    """
-    icount.counting(lim)
-
-    const = uu * sigsq
-    sum1 = uu * const
-    u = 2 * uu
-    j = ir
-
-    while j > 0:
-        nj = n[j - 1]
-        alj = alb[j - 1]
-        ancj = anc[j - 1]
-        x = u * alj
-        y = 1 - x
-        const = const + alj * (ancj / y + nj) / y
-        sum1 = sum1 + ancj * ((x / y) ** 2) + nj * ((x ** 2) / y + alog1(-x, False))
-        j = j - 1
-
-    errbd = exp1(-0.5 * sum1)
-    cx = const
-
-    return errbd, cx
-
-
-def ctff(upn, n, alb, anc, accx, amean, almin, almax, lim, icount, sigsq, ir):
-    """
-    This module finds CTF so that:
-      If UPN > 0:     P(QF > CTFF) < ACCX
-      Otherwise:      P(QF < CTFF) < ACCX
-
-    :param unp:
-    :param n: Vector of degrees of freedom
-    :param alb: IRx1 vector of constant multipliers
-    :param anc: Vector of noncentrality parameters
-    :param accx: Error bound
-    :param amean: Scalar representing the expected value of the QF
-    :param almin: Minimum of the constant multipliers
-    :param almax: Maximum of the constant multipliers
-    :param lim: Maximum number of integration terms
-    :param icount: Count of number of times this module is called
-    :param sigsq: square of SIGMA, the coefficient of normal term
-    :param ir: Number of chi-squared terms in the sum
-    :return:
-            upn:
-            fctff:
-    """
-
-    u2 = upn
-    u1 = 0
-    c1 = amean
-
-    if u2 <= 0:
-        rb = 2 * almin
-    else:
-        rb = 2 * almax
-
-    u = u2 / (1 + u2 * rb)
-    errbound, c2 = errbd(n, alb, anc, u, lim, icount, sigsq, ir)
-
-    if errbound > accx:
-        u1 = u2
-        c1 = c2
-        u2 = 2 * u2
-        u = u2 / (1 + u2 * rb)
-    else:
-        u = (c1 - amean) / (c2 - amean)
-
-    while u < 0.9:
-        u = (u1 + u2) / 2
-        errbound, const = errbd(n, alb, anc, u / (1 + u * rb), lim, icount, sigsq, ir)
-        if errbound > accx:
-            u1 = u
-            c1 = const
-        else:
-            u2 = u
-            c2 = const
-        u = (c1 - amean) / (c2 - amean)
-
-    upn = u2
-    fctff = c2
-
-    return upn, fctff
-
-
-def truncn(n, alb, anc, uu, tausq, lim, icount, sigsq, ir):
-    """
-    This function bounds integration error due to truncation at U.
-
-    :param n: Vector of degrees of freedom
-    :param alb: IRx1 vector of constant multipliers
-    :param anc: Vector of noncentrality parameters
-    :param uu:
-    :param tausq:
-    :param lim: Maximum number of integration terms
-    :param icount: Count of number of times this module is called
-    :param sigsq: square of SIGMA, the coefficient of normal term
-    :param ir: Number of chi-squared terms in the sum
-    :return: TRUNCN, integration error
-    """
-    icount.counting(lim)
-
-    u = uu
-    sum1 = 0
-    prod2 = 0
-    prod3 = 0
-    ns = 0
-    sum2 = (sigsq + tausq) * u ** 2
-    prod1 = 2 * sum2
-    u = 2 * uu
-    j = 1
-
-    while j <= ir:
-        alj = alb[j - 1]
-        ancj = anc[j - 1]
-        nj = n[j - 1]
-        x = (u * alj) ** 2
-        sum1 = sum1 + ancj * x / (1 + x)
-        if x > 1:
-            prod2 = prod2 + nj * np.log(x)
-            prod3 = prod3 + nj * alog1(x, True)
-            ns = ns + nj
-        else:
-            prod1 = prod1 + nj * alog1(x, True)
-        j = j + 1
-
-    sum1 = 0.5 * sum1
-    prod2 = prod1 + prod2
-    prod3 = prod1 + prod3
-    x = (exp1(-sum1 - 0.25 * prod2)) / (2 * np.arccos(0))
-    y = (exp1(-sum1 - 0.25 * prod3)) / (2 * np.arccos(0))
-
-    if ns == 0:
-        err1 = 1
-    else:
-        err1 = x * 2 / ns
-
-    if prod3 > 1:
-        err2 = 2.5 * y
-    else:
-        err2 = 1
-
-    if err2 < err1:
-        err1 = err2
-    else:
-        x = 0.5 * sum2
-
-    if x <= y:
-        err2 = 1
-    else:
-        err2 = y / x
-
-    if err1 < err2:
-        truncn = err1
-    else:
-        truncn = err2
-
-    return truncn
-
-
-def findu(utx, n, alb, anc, accx, lim, icount, sigsq, ir):
-    """
-    This module finds U such that _TRUNCN(U) < ACCX and _TRUNCN(U / 1.2) > ACCX.
-    :param utx:
-    :param n: Vector of degrees of freedom
-    :param alb: IRx1 vector of constant multipliers
-    :param anc: Vector of noncentrality parameters
-    :param accx:
-    :param lim: Maximum number of integration terms
-    :param icount: Count of number of times this module is called
-    :param sigsq: square of SIGMA, the coefficient of normal term
-    :param ir: Number of chi-squared terms in the sum
-    :return: utx
-    """
-    divis = [2.0, 1.4, 1.2, 1.1]
-    ut = utx
-    u = utx / 4
-
-    if truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) > accx:
-        u = ut
-        while truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) > accx:
-            ut = ut * 4
-            u = ut
-    else:
-        ut = u
-        u = u / 4
-        while truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) <= accx:
-            ut = u
-            u = u / 4
-
-    for i in divis:
-        u = ut / i
-        if truncn(n, alb, anc, u, 0, lim, icount, sigsq, ir) <= accx:
-            ut = u
-        else:
-            break
-
-    utx = ut
-
-    return utx
-
-
-def integr(n, alb, anc, nterm, aintrv, tausq, main, c, sigsq, ir):
-    """
-
-    :param n: Vector of degrees of freedom
-    :param alb: IRx1 vector of constant multipliers
-    :param anc: Vector of noncentrality parameters
-    :param nterm: Number of terms in integration
-    :param aintrv:
-    :param tausq:
-    :param main: True, False
-    :param c: Point at which the distribution function should be evaluated
-    :param sigsq: square of SIGMA, the coefficient of normal term
-    :param ir: Number of chi-squared terms in the sum
-    :return:
-            aintl:
-            ersm:
-    """
-    pi = 2 * np.arccos(0)
-    ainpi = aintrv / pi
-    k = nterm
-    aintl = 0
-    ersm = 0
-
-    while k >= 0:
-        u = (k + 0.5) * aintrv
-        sum1 = -2 * u * c
-        sum2 = abs(sum1)
-        sum3 = -0.5 * sigsq * (u ** 2)
-        j = ir
-        while j > 0:
-            nj = n[j - 1]
-            x = 2 * alb[j - 1] * u
-            y = x ** 2
-            sum3 = sum3 - 0.25 * nj * alog1(y, True)
-            y = anc[j - 1] * x / (1 + y)
-            z = nj * np.arctan(x) + y
-            sum1 = sum1 + z
-            sum2 = sum2 + abs(z)
-            sum3 = sum3 - 0.5 * x * y
-            j = j - 1
-        x = ainpi * exp1(sum3) / u
-        if not main:
-            x = x * (1 - exp1(-0.5 * tausq * u ** 2))
-
-        sum1 = np.sin(0.5 * sum1) * x
-        sum2 = 0.5 * sum2 * x
-        aintl = aintl + sum1
-        ersm = ersm + sum2
-        k = k - 1
-
-    return aintl, ersm
-
-
-def cfe(n, alb, anc, ith, x, lim, icount, ndtsrt, ir):
-    """
-    This module computes the coefficient of TAUSQ in error when
-    the convergence factor of Exp(-0.5 * TAUSQ * U**2) is used when DF
-    is evaluated at X.
-
-    :param n: Vector of degrees of freedom
-    :param alb: IRx1 vector of constant multipliers
-    :param anc: Vector of noncentrality parameters
-    :param ith: Vector of ranks of absolute values of ALB
-    :param x:
-    :param lim: Maximum number of integration terms
-    :param icount: Count of number of times this module is called
-    :param ndtsrt:   =True if _ORDER module has not been run
-                     =False if _ORDER module has been run
-    :param ir: Number of chi-squared terms in the sum
-    :return:
-            fail, =True if module produces unreasonable values
-            fcfe, Coefficient of TAUSQ
-    """
-    icount.counting(lim)
-
-    if ndtsrt:
-        ith, ndtsrt = order(alb)
-
-    axl = abs(x)
-    sxl = x / abs(x)
-    sum1 = 0
-    j = ir
-
-    while j > 0:
-        it = ith[j - 1]
-        if alb[it - 1] * sxl > 0:
-            alj = abs(alb[it - 1])
-            axl1 = axl - alj * (n[it - 1] + anc[it - 1])
-            aln28 = np.log(2) / 8
-            axl2 = alj / aln28
-            if axl1 > axl2:
-                axl = axl1
-                j = j - 1
+        # for HF crit val
+        if powercacl == 6:
+            if rank_U <= nue:
+                e_1_2 = epstilde_r_min
             else:
-                if axl > axl2:
-                    axl = axl2
-                sum1 = (axl - axl1) / alj
-                k = j - 1
-                while k > 0:
-                    itk = ith[k - 1]
-                    sum1 = sum1 + (n[itk - 1] + anc[itk - 1])
-                    k = k - 1
-                break
-        else:
-            j = j - 1
+                e_1_2 = epsda
 
-    if sum1 > 100:
-        fcfe = 1
-        fail = True
-    else:
-        fcfe = 2 ** (sum1 / 4) / ((2 * np.arccos(0)) * axl ** 2)
-        fail = False  # In powerlib, this case has not been defined
+        # for CM crit val
+        if powercacl == 7:
+            e_1_2 = epsda
 
-    return fail, fcfe
+        # for GG crit val
+        if powercacl == 8:
+            e_1_2 = eps
+
+
+        # Set E_3_5 for all tests
+        if cdfpowercalc == 1:
+            e_3_5 = eps
+        
