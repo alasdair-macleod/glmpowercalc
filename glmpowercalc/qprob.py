@@ -15,7 +15,7 @@ class Countr(object):
         :return:
         """
         if self.count > lim:
-            sys.exit("QF: CANNOT LOCATE INTEGRATION PARAMETERS")
+            raise Exception("QF: CANNOT LOCATE INTEGRATION PARAMETERS")
         else:
             self.count = self.count + 1
 

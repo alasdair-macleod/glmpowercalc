@@ -3,7 +3,7 @@ import numpy as np
 from glmpowercalc import qprob
 
 
-class TestUnirep(TestCase):
+class TestQProb(TestCase):
     def test_Countr(self):
         """ The value of the object should equal to expected"""
         icount = qprob.Countr()
