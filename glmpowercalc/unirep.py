@@ -214,9 +214,10 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     return exeps
 
 
-def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
+def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method, exeps,
             error_sum_square, hypo_sum_square, sig_type, ip_plan,
-            cdfpowercalc, n_est, rank_est,
+            cdfpowercalc, n_est, rank_est, n_ip, rank_ip,
+            sigmastareval, sigmastarevec, h,
             exep, powercacl, eps, alpha_scale, powerwarn):
     """
     Univariate STEP 3
@@ -239,6 +240,9 @@ def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
 
     if np.isnan(exeps) or nue <= 0:
         raise Exception("exeps is NaN or total_N  <= rank_X")
+
+    undf1 = rank_C * rank_U
+    undf2 = rank_U * nue
 
     # Create defaults - same for either SIGMA known or estimated
     sigstar = error_sum_square/nue
@@ -282,9 +286,9 @@ def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
         tau10 = nu_est * ((nu_est + 1) * q1 * q1 - 2 * q4) / (nu_est * nu_est + nu_est - 2)
         tau20 = nu_est * (nu_est * q4 - q1 * q1) / (nu_est * nu_est + nu_est - 2)
 
-        epsda = tau10 * (nua0 - 2) * (nua0 - 4) / (b * nua0 * nua0 * tau20)
+        epsda = tau10 * (nua0 - 2) * (nua0 - 4) / (rank_U * nua0 * nua0 * tau20)
         epsda = max(min(epsda), 1 / rank_U)
-        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1/epsda + 2 * b * (q5 / rank_C) / (q1 * q1))
+        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1/epsda + 2 * rank_U * (q5 / rank_C) / (q1 * q1))
         omegaua = q2 * epsna * (rank_U / q1)
 
         # Set E_1_2 for all tests
@@ -308,8 +312,86 @@ def lastuni(sigmastar, rank_C, rank_U, total_N, rank_X, u_method,
         if powercacl == 8:
             e_1_2 = eps
 
-
         # Set E_3_5 for all tests
         if cdfpowercalc == 1:
             e_3_5 = eps
-        
+        else:
+            e_3_5 = epsnhat
+
+        # Set E_4 for all tests
+        e_4 = eps
+        if powercacl == 7:
+            e_4 = epsda
+
+        # Compute DF for confidence limits for all tests
+        cl1df = rank_U * nu_est * e_4 / e_3_5
+
+    # case 3
+    # Enter loop to compute E1-E5 when planning IP study
+    if ip_plan == 1 & sig_type == 0:
+        nu_ip = n_ip - rank_ip
+        e_1_2 = exeps
+        e_4 = eps
+
+        if powercacl in (6, 7, 8):
+            lambdap = np.concatenate((sigmastareval,
+                                      np.power(sigmastareval, 2),
+                                      np.power(sigmastareval, 3),
+                                      np.power(sigmastareval, 4)), axis=1)
+            sumlam = np.sum(lambdap, axis=1)
+            kappa = np.multiply(np.multiply(np.matrix([[1],[2],[8],[48]]), nu_ip), sumlam)
+            muprime2 = kappa[1] + np.power(kappa[0], 2)
+            meanq2 = np.multiply(np.multiply(nu_ip, nu_ip+1), sumlam[1]) + np.multiply(nu_ip, np.sum(sigmastareval * sigmastareval.T))
+
+            et1 = muprime2 / np.power(nu_ip, 2)
+            et2 = meanq2 / np.power(nu_ip, 2)
+            ae_epsn_up = et1 + 2* q1 * q1
+            ae_epsn_dn = rank_U * (et2 + 2 * q5)
+            aex_epsn = ae_epsn_up / ae_epsn_dn
+            e_3_5 = aex_epsn
+        else:
+            epsn_num = q3 + q1 * q2 * 2 / rank_C
+            epsn_den = q4 + q5 * 2 / rank_C
+            epsn = epsn_num / (rank_U * epsn_den)
+            e_3_5 = epsn
+
+    # Error checking
+    if e_1_2 < 1/rank_U & (not np.isnan(e_1_2)):
+        e_1_2 = 1 / rank_U
+        powerwarn.directfwarn(17)
+    if e_1_2 > 1:
+        e_1_2 = 1
+        powerwarn.directfwarn(18)
+
+    # Obtain noncentrality and critical value for power point estimate
+    omega = e_3_5 * q2 / lambar
+    if powercacl == 7 & sig_type == 1 & ip_plan == 0:
+        omega = omegaua
+
+    fcrit = finv(1 - alpha_scale, undf1 * e_1_2, undf2 * e_1_2)
+
+    # Compute power point estimate
+    # 1. Muller, Edwards & Taylor 2002 CDF exact, Davies' algorithm
+    if cdfpowercalc in (3, 4):
+        df1 = float("nan")
+        df2 = float("nan")
+        fmethod = float("nan")
+        qweight = np.concatenate((sigmastareval, -sigmastareval*fcrit * undf1 /undf2))
+        qnuvec = np.concatenate((np.full((rank_U, 1), rank_C), np.full((rank_U, 1), total_N - rank_X)), axis=0)
+        dgover = np.diag(1 / np.sqrt(np.squeeze(np.asarray(sigmastareval))))
+        factori = sigmastarevec * dgover
+        omegstar = factori.T * h * factori
+        qnoncen = np.concatenate((np.diag(omegstar), np.zeros((rank_U, 1))), axis=0)
+        #TODO cdfpowr = qprob()
+        cdfpowr = float("nan")
+        if np.isnan(cdfpowr):
+            powerwarn.directfwarn(19)
+        else:
+            power = 1 - cdfpowr
+
+    # 2. Muller, Edwards & Taylor 2002 and Muller Barton 1989 CDF approx
+    if cdfpowercalc in (1, 2) or (cdfpowercalc == 4 and np.isnan(power)):
+        df1 = undf1 * e_3_5
+        df2 = undf2 * e_4
+        prob, fmethod = probf(fcrit, df1, df2, omega)
+
