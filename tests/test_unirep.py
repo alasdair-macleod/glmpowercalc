@@ -60,3 +60,4 @@ class TestUnirep(TestCase):
                                 u_method=2)
         self.assertAlmostEqual(actual, expected, delta=0.0000001)
 
+    def test_lastuni1(self):
