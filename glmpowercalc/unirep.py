@@ -387,14 +387,14 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
                                       np.power(sigmastareval, 2),
                                       np.power(sigmastareval, 3),
                                       np.power(sigmastareval, 4)), axis=1)
-            sumlam = np.sum(lambdap, axis=1)
+            sumlam = np.matrix(np.sum(lambdap, axis=0)).T
             kappa = np.multiply(np.multiply(np.matrix([[1],[2],[8],[48]]), nu_ip), sumlam)
             muprime2 = kappa[1] + np.power(kappa[0], 2)
             meanq2 = np.multiply(np.multiply(nu_ip, nu_ip+1), sumlam[1]) + np.multiply(nu_ip, np.sum(sigmastareval * sigmastareval.T))
 
             et1 = muprime2 / np.power(nu_ip, 2)
             et2 = meanq2 / np.power(nu_ip, 2)
-            ae_epsn_up = et1 + 2* q1 * q1
+            ae_epsn_up = et1 + 2* q1 * q2
             ae_epsn_dn = rank_U * (et2 + 2 * q5)
             aex_epsn = ae_epsn_up / ae_epsn_dn
             e_3_5 = aex_epsn

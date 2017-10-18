@@ -63,18 +63,18 @@ class TestUnirep(TestCase):
 
     def test_lastuni1(self):
         """ should return expected value """
-        expected = 0.7203684
+        expected = 0.9605244
         ucdf = [2, 2, 2, 2, 2]
         powercalc = 6
         rank_C = 1
         rank_U = 4
         rank_X = 1
         total_N = 20
-        error_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
+        hypo_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
                                         [0.625, 1.25, -1.25, 0.625],
                                         [-0.625, -1.25, 1.25, -0.625],
                                         [0.3125, 0.625, -0.625, 0.3125]])
-        hypo_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
+        error_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
                                         [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
                                         [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
                                         [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
@@ -103,4 +103,4 @@ class TestUnirep(TestCase):
             n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
             cltype, alpha_cl, alpha_cu, tolerance, round,
             exeps, eps, alpha_scalar, powerwarn)
-        self.assertAlmostEqual(actual, expected, places=7)
+        self.assertAlmostEqual(actual, expected, places=6)
