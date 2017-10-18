@@ -377,7 +377,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
 
     # case 3
     # Enter loop to compute E1-E5 when planning IP study
-    if ip_plan == 1 & sig_type == 0:
+    if ip_plan == 1 and sig_type == 0:
         nu_ip = n_ip - rank_ip
         e_1_2 = exeps
         e_4 = eps
@@ -405,7 +405,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             e_3_5 = epsn
 
     # Error checking
-    if e_1_2 < 1/rank_U & (not np.isnan(e_1_2)):
+    if e_1_2 < 1/rank_U:
         e_1_2 = 1 / rank_U
         powerwarn.directfwarn(17)
     if e_1_2 > 1:

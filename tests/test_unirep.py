@@ -1,6 +1,7 @@
 from unittest import TestCase
 import numpy as np
 from glmpowercalc import unirep
+from glmpowercalc.calculation_state import CalculationState
 
 
 class TestUnirep(TestCase):
@@ -61,3 +62,45 @@ class TestUnirep(TestCase):
         self.assertAlmostEqual(actual, expected, delta=0.0000001)
 
     def test_lastuni1(self):
+        """ should return expected value """
+        expected = 0.7203684
+        ucdf = [2, 2, 2, 2, 2]
+        powercalc = 6
+        rank_C = 1
+        rank_U = 4
+        rank_X = 1
+        total_N = 20
+        error_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
+                                        [0.625, 1.25, -1.25, 0.625],
+                                        [-0.625, -1.25, 1.25, -0.625],
+                                        [0.3125, 0.625, -0.625, 0.3125]])
+        hypo_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
+                                        [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
+                                        [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
+                                        [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
+        sig_type = 0
+        ip_plan = 1
+        rank_ip = 1
+        n_ip = 10
+        n_est = 10
+        rank_est = float('nan')
+        sigmastareval = np.matrix([[0.23555], [0.17123], [0.05561], [0.04721]])
+        sigmastarevec = np.matrix([[-1, 4.51e-17, -2.01e-16, -4.61e-18],
+                                    [2.776e-17, 1, -3.33e-16, -2.39e-16],
+                                    [-2.74e-16, 2.632e-16, 1, 2.001e-16],
+                                    [-4.61e-18, 2.387e-16, -2e-16, 1]])
+        cltype = -1
+        alpha_cl = 0.025
+        alpha_cu = 0.025
+        tolerance = 1e-12
+        round = 2
+        exeps = 0.7203684
+        eps = 0.7203684
+        alpha_scalar = 0.04
+        powerwarn = CalculationState(1e-12)
+        actual = unirep.lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
+            error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
+            n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
+            cltype, alpha_cl, alpha_cu, tolerance, round,
+            exeps, eps, alpha_scalar, powerwarn)
+        self.assertAlmostEqual(actual, expected, places=7)
