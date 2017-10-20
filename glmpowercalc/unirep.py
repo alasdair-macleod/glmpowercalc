@@ -43,7 +43,7 @@ def firstuni(sigmastar, rank_U):
     d = len(deigval_array)
 
     deigval = np.matrix(deigval_array).T
-    mtp     = np.matrix(mtp_array).T
+    mtp = np.matrix(mtp_array).T
 
     return d, mtp, eps, deigval, slam1, slam2, slam3
 
@@ -75,9 +75,11 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     derh1 = np.full((d, 1), 2 * total_N * slam3) - 4 * deigval
     derh2 = 2 * (total_N - rank_X) * deigval - np.full((d, 1), 2 * np.sqrt(slam1))
     fk = (derh1 - h1 * derh2 / h2) / (rank_U * h2)
-    der2h1 = np.full((d, 1), 2*total_N-4)
-    der2h2 = np.full((d, 1), 2*(total_N-rank_X)-2)
-    fkk = (np.multiply(-derh1, derh2) / h2 + der2h1 - np.multiply(derh1, derh2) / h2 + 2 * h1 * np.power(derh2, 2) / h2 ** 2 - h1 * der2h2 / h2) / (h2 * rank_U)
+    der2h1 = np.full((d, 1), 2 * total_N - 4)
+    der2h2 = np.full((d, 1), 2 * (total_N - rank_X) - 2)
+    fkk = (np.multiply(-derh1, derh2) / h2 + der2h1 - np.multiply(derh1, derh2) / h2 + 2 * h1 * np.power(derh2,
+                                                                                                         2) / h2 ** 2 - h1 * der2h2 / h2) / (
+          h2 * rank_U)
     t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
     sum1 = np.sum(t1)
 
@@ -109,7 +111,7 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     den01 = nu * expt2 - expt1
 
     # Define HF Approx E(.) for Method 1
-    e1epshf = num01 /den01
+    e1epshf = num01 / den01
 
     # u_method
     # =1 --> Muller and Barton (1989) approximation
@@ -154,6 +156,7 @@ def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
 
     return exeps
 
+
 def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     """
     Univariate, GG STEP 2:
@@ -170,7 +173,7 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
                                                          rank_U=rank_U)
 
-    fk = np.full((d,1), 1) * 2 * slam3 / (slam2 * rank_U) - 2 * deigval * slam1 / (rank_U * slam2 ** 2)
+    fk = np.full((d, 1), 1) * 2 * slam3 / (slam2 * rank_U) - 2 * deigval * slam1 / (rank_U * slam2 ** 2)
     c0 = 1 - slam1 / slam2
     c1 = -4 * slam3 / slam2
     c2 = 4 * slam1 / slam2 ** 2
@@ -179,7 +182,7 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     sum1 = np.sum(t1)
 
     if d == 1:
-        sum2 =0
+        sum2 = 0
     else:
         t2 = np.multiply(np.multiply(fk, deigval), mtp)
         t3 = np.multiply(deigval, mtp)
@@ -294,7 +297,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
     undf2 = rank_U * nue
 
     # Create defaults - same for either SIGMA known or estimated
-    sigstar = error_sum_square/nue
+    sigstar = error_sum_square / nue
     q1 = np.trace(sigstar)
     q2 = np.trace(hypo_sum_square)
     q3 = q1 ** 2
@@ -306,7 +309,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
     # Enter loop to compute E1-E5 based on known SIGMA
     if sig_type == 0 and ip_plan == 0:
         epsn_num = q3 + q1 * q2 * 2 / rank_C
-        epsn_den = q4 + q5 * 2 /rank_C
+        epsn_den = q4 + q5 * 2 / rank_C
         epsn = epsn_num / (rank_U * epsn_den)
         e_1_2 = exeps
         e_4 = eps
@@ -323,8 +326,8 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             raise Exception("ERROR 81: Too few estimation df in LASTUNI. df = N_EST - RANK_EST <= 1.")
 
         # For POWERCALC =6=HF, =7=CM, =8=GG critical values
-        epstilde_r =  ((nu_est + 1) * q3 - 2 * q4) / (rank_U * (nu_est * q4 - q3))
-        epstilde_r_min = min(epstilde_r)
+        epstilde_r = ((nu_est + 1) * q3 - 2 * q4) / (rank_U * (nu_est * q4 - q3))
+        epstilde_r_min = min(epstilde_r, 1)
         mult = np.power(nu_est, 2) + nu_est - 2
 
         epsnhat_num = q3 * nu_est * (nu_est + 1) + q1 * q2 * 2 * mult / rank_C - q4 * 2 * nu_est
@@ -336,8 +339,8 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
         tau20 = nu_est * (nu_est * q4 - q1 * q1) / (nu_est * nu_est + nu_est - 2)
 
         epsda = tau10 * (nua0 - 2) * (nua0 - 4) / (rank_U * nua0 * nua0 * tau20)
-        epsda = max(min(epsda), 1 / rank_U)
-        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1/epsda + 2 * rank_U * (q5 / rank_C) / (q1 * q1))
+        epsda = max(min(epsda, 1), 1 / rank_U)
+        epsna = (1 + 2 * (q2 / rank_C) / q1) / (1 / epsda + 2 * rank_U * (q5 / rank_C) / (q1 * q1))
         omegaua = q2 * epsna * (rank_U / q1)
 
         # Set E_1_2 for all tests
@@ -388,13 +391,14 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
                                       np.power(sigmastareval, 3),
                                       np.power(sigmastareval, 4)), axis=1)
             sumlam = np.matrix(np.sum(lambdap, axis=0)).T
-            kappa = np.multiply(np.multiply(np.matrix([[1],[2],[8],[48]]), nu_ip), sumlam)
-            muprime2 = kappa[1] + np.power(kappa[0], 2)
-            meanq2 = np.multiply(np.multiply(nu_ip, nu_ip+1), sumlam[1]) + np.multiply(nu_ip, np.sum(sigmastareval * sigmastareval.T))
+            kappa = np.multiply(np.multiply(np.matrix([[1], [2], [8], [48]]), nu_ip), sumlam)
+            muprime2 = np.asscalar(kappa[1] + np.power(kappa[0], 2))
+            meanq2 = np.asscalar(np.multiply(np.multiply(nu_ip, nu_ip + 1), sumlam[1]) + np.multiply(nu_ip, np.sum(
+                sigmastareval * sigmastareval.T)))
 
             et1 = muprime2 / np.power(nu_ip, 2)
             et2 = meanq2 / np.power(nu_ip, 2)
-            ae_epsn_up = et1 + 2* q1 * q2
+            ae_epsn_up = et1 + 2 * q1 * q2
             ae_epsn_dn = rank_U * (et2 + 2 * q5)
             aex_epsn = ae_epsn_up / ae_epsn_dn
             e_3_5 = aex_epsn
@@ -405,7 +409,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             e_3_5 = epsn
 
     # Error checking
-    if e_1_2 < 1/rank_U:
+    if e_1_2 < 1 / rank_U:
         e_1_2 = 1 / rank_U
         powerwarn.directfwarn(17)
     if e_1_2 > 1:
@@ -426,13 +430,13 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
         df2 = float("nan")
         fmethod = float("nan")
         accuracy = 10 ** (-round - 1)
-        qweight = np.concatenate((sigmastareval, -sigmastareval*fcrit * undf1 /undf2))
+        qweight = np.concatenate((sigmastareval, -sigmastareval * fcrit * undf1 / undf2))
         qnuvec = np.concatenate((np.full((rank_U, 1), rank_C), np.full((rank_U, 1), total_N - rank_X)), axis=0)
         dgover = np.diag(1 / np.sqrt(np.squeeze(np.asarray(sigmastareval))))
         factori = sigmastarevec * dgover
         omegstar = factori.T * hypo_sum_square * factori
         qnoncen = np.concatenate((np.diag(omegstar), np.zeros((rank_U, 1))), axis=0)
-        #TODO cdfpowr = qprob()
+        # TODO cdfpowr = qprob()
         cdfpowr = float("nan")
         if np.isnan(cdfpowr):
             powerwarn.directfwarn(19)
@@ -452,9 +456,9 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             power = 1 - prob
 
     # Compute CL for power, if requested by user
-    if cltype == 2:
+    #if cltype == 2:
         # change from chi sq to F, and only change:)
-        raise Exception("CLTYPE=2 for UNIREP awaiting implementation")
+        #raise Exception("CLTYPE=2 for UNIREP awaiting implementation")
 
     if cltype == 1:
         if cdfpowercalc > 2:
@@ -482,7 +486,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             fmethod_u = 5
             noncen_u = float('nan')
         else:
-            chi_u = chi2.ppf(1-alpha_cu, cl1df)
+            chi_u = chi2.ppf(1 - alpha_cu, cl1df)
             noncen_u = omega * (chi_u / cl1df)
             prob_u, fmethod_u = probf(fcrit, df1, df2, noncen_u)
             powerwarn.fwarn(fmethod_u, 2)
@@ -491,5 +495,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             power_u = alpha_scalar
         else:
             power_u = 1 - prob_u
+
+        return power, power_l, power_u
 
     return power
