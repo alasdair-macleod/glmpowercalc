@@ -77,9 +77,13 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     fk = (derh1 - h1 * derh2 / h2) / (rank_U * h2)
     der2h1 = np.full((d, 1), 2 * total_N - 4)
     der2h2 = np.full((d, 1), 2 * (total_N - rank_X) - 2)
-    fkk = (np.multiply(-derh1, derh2) / h2 + der2h1 - np.multiply(derh1, derh2) / h2 + 2 * h1 * np.power(derh2,
-                                                                                                         2) / h2 ** 2 - h1 * der2h2 / h2) / (
-          h2 * rank_U)
+    fkk = (
+              np.multiply(-derh1, derh2) / h2
+              + der2h1
+              - np.multiply(derh1, derh2) / h2
+              + 2 * h1 * np.power(derh2, 2) / h2 ** 2
+              - h1 * der2h2 / h2
+          ) / (h2 * rank_U)
     t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
     sum1 = np.sum(t1)
 
@@ -267,8 +271,10 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
     :param ip_plan: (scalar) flag to compute power in planning an internal pilot design
     :param rank_ip: (scalar) rank of the design matrix used in the future study (required if IP_PLAN=1)
     :param n_ip: (scalar) # of observations planned for the internal pilot of the future study (required if IP_PLAN=1)
-    :param rank_est: (scalar) design matrix rank in analysis which yielded BETA and SIGMA estimates (required if CLTYPE>=1)
-    :param n_est: (scalar) # of observations in analysis which yielded BETA and SIGMA estimates (required if CLTYPE>=1 or SIGTYPE=1)
+    :param rank_est: (scalar) design matrix rank in analysis which yielded BETA and SIGMA estimates
+                        (required if CLTYPE>=1)
+    :param n_est: (scalar) # of observations in analysis which yielded BETA and SIGMA estimates
+                    (required if CLTYPE>=1 or SIGTYPE=1)
     :param sigmastareval: eigenvalues  of SIGMASTAR=U`*SIGMA*U
     :param sigmastarevec: eigenvectors of SIGMASTAR=U`*SIGMA*U
     :param cltype: (scalar) choice of whether confidence limits produced
@@ -393,8 +399,8 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             sumlam = np.matrix(np.sum(lambdap, axis=0)).T
             kappa = np.multiply(np.multiply(np.matrix([[1], [2], [8], [48]]), nu_ip), sumlam)
             muprime2 = np.asscalar(kappa[1] + np.power(kappa[0], 2))
-            meanq2 = np.asscalar(np.multiply(np.multiply(nu_ip, nu_ip + 1), sumlam[1]) + np.multiply(nu_ip, np.sum(
-                sigmastareval * sigmastareval.T)))
+            meanq2 = np.asscalar(np.multiply(np.multiply(nu_ip, nu_ip + 1), sumlam[1])
+                                 + np.multiply(nu_ip, np.sum(sigmastareval * sigmastareval.T)))
 
             et1 = muprime2 / np.power(nu_ip, 2)
             et2 = meanq2 / np.power(nu_ip, 2)
