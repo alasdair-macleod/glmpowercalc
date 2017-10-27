@@ -1,0 +1,2 @@
+
+class TestPower(TestCase):
