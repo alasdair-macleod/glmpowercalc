@@ -24,8 +24,8 @@ class Constants:
     MULTI_WLK_RAO_OS = 'Rao (1951) two moment null approx + OS noncen mult'
 
     #CL_TYPE
-    CLTYPE_DESIRED_KNOWN = 'BETA known, SIGMA estimated and CL desired'
-    CLTYPE_DESIRED_ESTIMATE = 'BETA estimated, SIGMA estimated and CL desired'
+    CLTYPE_DESIRED_KNOWN = '1 BETA known, SIGMA estimated and CL desired'
+    CLTYPE_DESIRED_ESTIMATE = '2 BETA estimated, SIGMA estimated and CL desired'
     CLTYPE_NOT_DESIRED = 'Confidence intervals for power not desired'
 
     #FMETHOD

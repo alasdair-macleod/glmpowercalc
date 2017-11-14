@@ -341,7 +341,7 @@ class Power:
             unirep.firstuni(sigma_star, num_col_u)
 
         if self.opt_calc_collapse:
-            multirep.special()
+            multirep.special(rank_c, rank_u, rank_x, total_sample_size, eval, self.alpha, self.CL )
 
         if self.opt_calc_hlt:
             multirep.hlt()
