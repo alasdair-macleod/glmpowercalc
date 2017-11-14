@@ -38,7 +38,7 @@ class TestUnirep(TestCase):
                                 rank_U=3,
                                 total_N=20,
                                 rank_X=5,
-                                u_method=2)
+                                UnirepUncorrected=2)
         self.assertAlmostEqual(actual, expected, places=7)
 
     def test_cmexeps(self):
@@ -48,7 +48,7 @@ class TestUnirep(TestCase):
                                 rank_U=3,
                                 total_N=20,
                                 rank_X=5,
-                                u_method=2)
+                                UnirepUncorrected=2)
         self.assertAlmostEqual(actual, expected, places=7)
 
     def test_ggexeps(self):
@@ -58,7 +58,7 @@ class TestUnirep(TestCase):
                                 rank_U=3,
                                 total_N=20,
                                 rank_X=5,
-                                u_method=2)
+                                UnirepHuynhFeldt=2)
         self.assertAlmostEqual(actual, expected, delta=0.0000001)
 
     def test_lastuni1(self):
@@ -98,11 +98,11 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         powerwarn = CalculationState(1e-12)
-        actual = unirep.lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
-            error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-            n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cltype, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, powerwarn)
+        actual = unirep.lastuni(powercalc, rank_U, total_N, rank_X,
+                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
+                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
+                                cltype, alpha_cl, alpha_cu, tolerance, round,
+                                exeps, eps, alpha_scalar, powerwarn)
         self.assertAlmostEqual(actual, expected, places=5)
 
     def test_lastuni2(self):
@@ -142,11 +142,11 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         powerwarn = CalculationState(1e-12)
-        actual = unirep.lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
-            error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-            n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cltype, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, powerwarn)
+        actual = unirep.lastuni(powercalc, rank_U, total_N, rank_X,
+                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
+                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
+                                cltype, alpha_cl, alpha_cu, tolerance, round,
+                                exeps, eps, alpha_scalar, powerwarn)
         self.assertAlmostEqual(actual, expected, places=6)
 
     def test_lastuni3(self):
@@ -186,11 +186,11 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         powerwarn = CalculationState(1e-12)
-        actual = unirep.lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
-            error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-            n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cltype, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, powerwarn)
+        actual = unirep.lastuni(powercalc, rank_U, total_N, rank_X,
+                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
+                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
+                                cltype, alpha_cl, alpha_cu, tolerance, round,
+                                exeps, eps, alpha_scalar, powerwarn)
         self.assertAlmostEqual(actual, expected, places=5)
 
     def test_lastuni4(self):
@@ -230,11 +230,11 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         powerwarn = CalculationState(1e-12)
-        actual = unirep.lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
-            error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-            n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cltype, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, powerwarn)
+        actual = unirep.lastuni(powercalc, rank_U, total_N, rank_X,
+                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
+                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
+                                cltype, alpha_cl, alpha_cu, tolerance, round,
+                                exeps, eps, alpha_scalar, powerwarn)
         self.assertAlmostEqual(actual[0], expected[0], places=5)
         self.assertAlmostEqual(actual[1], expected[1], places=5)
         self.assertAlmostEqual(actual[2], expected[2], places=5)

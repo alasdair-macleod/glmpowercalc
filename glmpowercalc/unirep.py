@@ -1,4 +1,6 @@
 import numpy as np
+
+from glmpowercalc.constants import Constants
 from glmpowercalc.finv import finv
 from glmpowercalc.probf import probf
 from scipy.stats import chi2
@@ -48,7 +50,7 @@ def firstuni(sigmastar, rank_U):
     return d, mtp, eps, deigval, slam1, slam2, slam3
 
 
-def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+def hfexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
     """
 
     Univariate, HF STEP 2:
@@ -63,7 +65,7 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     :param rank_U:
     :param total_N:
     :param rank_X:
-    :param u_method:
+    :param UnirepUncorrected:
     :return:
     """
     d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
@@ -113,18 +115,18 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     # Define HF Approx E(.) for Method 1
     e1epshf = num01 / den01
 
-    # u_method
+    # UnirepUncorrected
     # =1 --> Muller and Barton (1989) approximation
     # =2 --> Method 1, Muller, Edwards, and Taylor (2004)
-    if u_method == 1:
+    if UnirepUncorrected == Constants.UCDF_MULLER1989_APPROXIMATION:
         exeps = e0epshf
-    elif u_method == 2:
+    elif UnirepUncorrected == Constants.UCDF_MULLER2004_APPROXIMATION:
         exeps = e1epshf
 
     return exeps
 
 
-def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+def cmexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
     """
     Univariate, HF STEP 2 with Chi-Muller:
     This function computes the approximate expected value of
@@ -135,7 +137,7 @@ def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     :param rank_U:
     :param total_N:
     :param rank_X:
-    :param u_method:
+    :param UnirepUncorrected:
     :return:
     """
 
@@ -143,7 +145,7 @@ def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
                     rank_U=rank_U,
                     total_N=total_N,
                     rank_X=rank_X,
-                    u_method=u_method)
+                    UnirepUncorrected=UnirepUncorrected)
 
     if total_N - rank_X == 1:
         uefactor = 1
@@ -157,7 +159,7 @@ def cmexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     return exeps
 
 
-def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
+def ggexeps(sigmastar, rank_U, total_N, rank_X, UnirepHuynhFeldt):
     """
     Univariate, GG STEP 2:
     This function computes the approximate expected value of the
@@ -167,7 +169,7 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     :param rank_U:
     :param total_N:
     :param rank_X:
-    :param u_method:
+    :param UnirepHuynhFeldt:
     :return:
     """
     d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
@@ -207,56 +209,27 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, u_method):
     # Define GG Approx E(.) for Method 1
     e1epsgg = (1 / rank_U) * (expt1 / expt2)
 
-    # u_method
+    # UnirepHuynhFeldt
     # =1 --> Muller and Barton (1989) approximation
     # =2 --> Method 1, Muller, Edwards, and Taylor (2004)
-    if u_method == 1:
+    if UnirepHuynhFeldt == Constants.UCDF_MULLER1989_APPROXIMATION:
         exeps = e0epsgg
-    elif u_method == 2:
+    elif UnirepHuynhFeldt == Constants.UCDF_MULLER2004_APPROXIMATION:
         exeps = e1epsgg
 
     return exeps
 
 
-def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
+def lastuni(rank_C, rank_U, total_N, rank_X,
             error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
             n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cltype, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, powerwarn):
+            cl_type, alpha_cl, alpha_cu, tolerance, round,
+            exeps, eps, alpha_scalar, powerwarn, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+            unirepmethod):
     """
     Univariate STEP 3
     This module performs the final step for univariate repeated measures power calculations.
 
-    :param ucdf:
-        UCDF, a 1x1, 5x1 or 1x5 vector of choices of calculation
-        for UNIREP test statistic CDF.
-
-        If a 5x1 or 1x5 matrix is specified, the elements correspond
-        to choices for calculation of the CDF of:
-
-        UCDF[1] --> Uncorrected test
-        UCDF[2] --> Huynh-Feldt test
-        UCDF[3] --> Huynh-Feldt test with Chi-Muller
-        UCDF[4] --> Geisser-Greenhouse test
-        UCDF[5] --> Box conservative test
-        Where:
-
-        UCDF[J] =1 --> Muller and Barton (1989) approximation
-                =2 --> Muller, Edwards and Taylor (2004) approximation
-                =3 --> Muller, Edwards and Taylor (2004) exact, via
-                  Davies' algorithm. This algorithm may fail -- if it
-                  does, this choice will yield missing values.
-                =4 --> Muller, Edwards and Taylor (2004) exact as in
-                  choice 3, except if the Davies' algorithm fails,
-                  this replaces the missing value with the value
-                  resulting from choice 2
-
-        Specifying a 1x1 matrix with choice 1, 2, 3, or 4 as described
-        above gives the same method for all four tests.
-
-        If UCDF is not specified, the default is {2 2 2 2 2}`.
-
-    :param powercalc: indicates selected power calculation, 5=>UN 6=>HF 7=>CM 8=>GG 9=>Box
     :param rank_C: rank of C
     :param rank_U: rank of U
     :param total_N: total number of observations
@@ -271,7 +244,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
     :param n_est: (scalar) # of observations in analysis which yielded BETA and SIGMA estimates (required if CLTYPE>=1 or SIGTYPE=1)
     :param sigmastareval: eigenvalues  of SIGMASTAR=U`*SIGMA*U
     :param sigmastarevec: eigenvectors of SIGMASTAR=U`*SIGMA*U
-    :param cltype: (scalar) choice of whether confidence limits produced
+    :param cl_type: (scalar) choice of whether confidence limits produced
     :param alpha_cl: (scalar) lower tail probability for power C.L.
     :param alpha_cu: (scalar) upper tail probability for power C.L.
     :param tolerance: (scalar) value not tolerated, numeric zero, used for checking singularity.
@@ -283,10 +256,9 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
     :return:
     """
 
-    cdfpowercalc = ucdf[powercalc - 5]
     nue = total_N - rank_X
 
-    if rank_U > nue and powercalc in (5, 8, 9):
+    if rank_U > nue and (opt_calc_un or opt_calc_gg or opt_calc_box):
         powerwarn.directfwarn(23)
         raise Exception("#TODO what kind of exception")
 
@@ -307,20 +279,20 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
 
     # Case 1
     # Enter loop to compute E1-E5 based on known SIGMA
-    if sig_type == 0 and ip_plan == 0:
+    if (not sig_type) and (not ip_plan):
         epsn_num = q3 + q1 * q2 * 2 / rank_C
         epsn_den = q4 + q5 * 2 / rank_C
         epsn = epsn_num / (rank_U * epsn_den)
         e_1_2 = exeps
         e_4 = eps
-        if cdfpowercalc == 1:
+        if unirepmethod == Constants.UCDF_MULLER1989_APPROXIMATION:
             e_3_5 = eps
         else:
             e_3_5 = epsn
 
     # Case 2
     # Enter loop to compute E1-E5 based on estimated SIGMA
-    if sig_type == 1 and ip_plan == 0:
+    if sig_type and (not ip_plan):
         nu_est = n_est - rank_est
         if nu_est <= 1:
             raise Exception("ERROR 81: Too few estimation df in LASTUNI. df = N_EST - RANK_EST <= 1.")
@@ -346,46 +318,47 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
         # Set E_1_2 for all tests
 
         # for UN or Box critical values
-        if powercalc in (5, 9):
+        if opt_calc_un or opt_calc_box:
             e_1_2 = epsda
 
         # for HF crit val
-        if powercalc == 6:
+        if opt_calc_hf:
             if rank_U <= nue:
                 e_1_2 = epstilde_r_min
             else:
                 e_1_2 = epsda
 
         # for CM crit val
-        if powercalc == 7:
+        if opt_calc_cm:
             e_1_2 = epsda
 
         # for GG crit val
-        if powercalc == 8:
+        if opt_calc_gg:
             e_1_2 = eps
 
         # Set E_3_5 for all tests
-        if cdfpowercalc == 1:
+        if unirepmethod == Constants.UCDF_MULLER1989_APPROXIMATION:
             e_3_5 = eps
         else:
             e_3_5 = epsnhat
 
         # Set E_4 for all tests
-        e_4 = eps
-        if powercalc == 7:
+        if opt_calc_cm:
             e_4 = epsda
+        else:
+            e_4 = eps
 
         # Compute DF for confidence limits for all tests
         cl1df = rank_U * nu_est * e_4 / e_3_5
 
     # case 3
     # Enter loop to compute E1-E5 when planning IP study
-    if ip_plan == 1 and sig_type == 0:
+    if ip_plan and (not sig_type):
         nu_ip = n_ip - rank_ip
         e_1_2 = exeps
         e_4 = eps
 
-        if powercalc in (6, 7, 8):
+        if opt_calc_hf or opt_calc_cm or opt_calc_gg:
             lambdap = np.concatenate((sigmastareval,
                                       np.power(sigmastareval, 2),
                                       np.power(sigmastareval, 3),
@@ -418,14 +391,15 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
 
     # Obtain noncentrality and critical value for power point estimate
     omega = e_3_5 * q2 / lambar
-    if powercalc == 7 & sig_type == 1 & ip_plan == 0:
+    if opt_calc_cm and sig_type and (not ip_plan):
         omega = omegaua
 
     fcrit = finv(1 - alpha_scalar, undf1 * e_1_2, undf2 * e_1_2)
 
     # Compute power point estimate
     # 1. Muller, Edwards & Taylor 2002 CDF exact, Davies' algorithm
-    if cdfpowercalc in (3, 4):
+    if unirepmethod == Constants.UCDF_EXACT_DAVIES or \
+            unirepmethod == Constants.UCDF_EXACT_DAVIES_FAIL:
         df1 = float("nan")
         df2 = float("nan")
         fmethod = float("nan")
@@ -445,29 +419,32 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
 
     # 2. Muller, Edwards & Taylor 2002 and Muller Barton 1989 CDF approx
     # UCDFTEMP[]=4 reverts to UCDFTEMP[]=2 if exact CDF fails
-    if cdfpowercalc in (1, 2) or (cdfpowercalc == 4 and np.isnan(power)):
+    if (unirepmethod == Constants.UCDF_MULLER1989_APPROXIMATION or
+                unirepmethod == Constants.UCDF_MULLER2004_APPROXIMATION) or \
+            (unirepmethod == Constants.UCDF_EXACT_DAVIES_FAIL and np.isnan(power)):
         df1 = undf1 * e_3_5
         df2 = undf2 * e_4
         prob, fmethod = probf(fcrit, df1, df2, omega)
         powerwarn.fwarn(fmethod, 1)
-        if fmethod == 4 and prob == 1:
+        if fmethod == Constants.FMETHOD_NORMAL_LR and prob == 1:
             power = alpha_scalar
         else:
             power = 1 - prob
 
     # Compute CL for power, if requested by user
-    #if cltype == 2:
+    #if cl_type == Constants.CLTYPE_DESIRED_ESTIMATE:
         # change from chi sq to F, and only change:)
         #raise Exception("CLTYPE=2 for UNIREP awaiting implementation")
 
-    if cltype == 1:
-        if cdfpowercalc > 2:
+    if cl_type == Constants.CLTYPE_DESIRED_KNOWN:
+        if unirepmethod == Constants.UCDF_EXACT_DAVIES or \
+                unirepmethod == Constants.UCDF_EXACT_DAVIES_FAIL:
             raise Exception("ERROR 82: Any use of Exact CDF is incompatible with computation of CL for power.")
 
         # Calculate lower bound for power
         if alpha_cl <= tolerance:
             prob_l = 1 - alpha_scalar
-            fmethod_l = 5
+            fmethod_l = Constants.FMETHOD_MISSING
             noncen_l = float('nan')
         else:
             chi_l = chi2.ppf(alpha_cl, cl1df)
@@ -475,7 +452,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             prob_l, fmethod_l = probf(fcrit, df1, df2, noncen_l)
             powerwarn.fwarn(fmethod_l, 2)
 
-        if fmethod_l == 4 and prob_l == 1:
+        if fmethod_l == Constants.FMETHOD_NORMAL_LR and prob_l == 1:
             power_l = alpha_scalar
         else:
             power_l = 1 - prob_l
@@ -483,7 +460,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
         # Calculate upper bound for power
         if alpha_cu <= tolerance:
             prob_u = 0
-            fmethod_u = 5
+            fmethod_u = Constants.FMETHOD_MISSING
             noncen_u = float('nan')
         else:
             chi_u = chi2.ppf(1 - alpha_cu, cl1df)
@@ -491,7 +468,7 @@ def lastuni(ucdf, powercalc, rank_C, rank_U, total_N, rank_X,
             prob_u, fmethod_u = probf(fcrit, df1, df2, noncen_u)
             powerwarn.fwarn(fmethod_u, 2)
 
-        if fmethod_u == 4 and prob_u == 1:
+        if fmethod_u == Constants.FMETHOD_NORMAL_LR and prob_u == 1:
             power_u = alpha_scalar
         else:
             power_u = 1 - prob_u
