@@ -27,3 +27,10 @@ class Constants:
     CLTYPE_DESIRED_KNOWN = 'BETA known, SIGMA estimated and CL desired'
     CLTYPE_DESIRED_ESTIMATE = 'BETA estimated, SIGMA estimated and CL desired'
     CLTYPE_NOT_DESIRED = 'Confidence intervals for power not desired'
+
+    #FMETHOD
+    FMETHOD_NOAPPROXIMATION = '1 CDF function (no approximation)'
+    FMETHOD_TIKU = '2 Tiku approximation (best approximation)'
+    FMETHOD_NORMAL_SM = '3 Normal approximation, |Z-score| < 6 (worst approximation)'
+    FMETHOD_NORMAL_LR = '4 Normal approximation, |Z-score| > 6 (approximation but power is almost certainly 0 or 1)'
+    FMETHOD_MISSING = '5 Power missing'
