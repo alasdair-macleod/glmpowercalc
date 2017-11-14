@@ -1,14 +1,9 @@
 import numpy as np
 import warnings
 
-from glmpowercalc import unirep
+from glmpowercalc import unirep, multirep
 from glmpowercalc.constants import Constants
-from glmpowercalc.hlt import hlt
-from glmpowercalc.pbt import pbt
 from glmpowercalc.ranksymm import ranksymm
-from glmpowercalc.special import special
-from glmpowercalc.unirep import lastuni
-from glmpowercalc.wlk import wlk
 
 
 class CL:
@@ -78,9 +73,6 @@ class IP:
 class Power:
     def __init__(self):
 
-        self.opt_cmwarn = True
-        self.opt_orthu = True
-        self.opt_uniforce = False
         self.c_matrix = np.matrix([[1]])
         self.beta = np.matrix([[1]])
         self.sigma = np.matrix([[2]])
@@ -102,7 +94,7 @@ class Power:
         self.EpsilonAppHuynhFeldt = Constants.EPSILON_MULLER2004
         self.EpsilonAppHuynhFeldtChiMuller = Constants.EPSILON_MULLER2004
         self.EpsilonAppGeisserGreenhouse = Constants.EPSILON_MULLER2004
-        self.MultirepHLT = Constants.MULTI_HLT_MCKEON_OS
+        self.MultiHLT = Constants.MULTI_HLT_MCKEON_OS
         self.MultiPBT = Constants.MULTI_PBT_MULLER
         self.MultiWLK = Constants.MULTI_WLK_RAO
         self.opt_noncencl = False
@@ -116,6 +108,9 @@ class Power:
         self.opt_calc_gg = True
         self.opt_calc_box = False
         self.opt_fracrepn = False
+        self.opt_orthu = True
+        self.opt_uniforce = False
+        self.opt_cmwarn = True
 
         self.CL = CL()
         self.IP = IP()
@@ -300,12 +295,12 @@ class Power:
         if num_col_u > total_sample_size - rank_x and \
                 (total_sample_size - rank_x > 0 and
                      (self.opt_calc_collapse |
-                          self.opt_calc_hlt |
-                          self.opt_calc_pbt |
-                          self.opt_calc_wlk |
-                          self.opt_calc_un |
-                          self.opt_calc_gg |
-                          self.opt_calc_box)):
+                      self.opt_calc_hlt |
+                      self.opt_calc_pbt |
+                      self.opt_calc_wlk |
+                      self.opt_calc_un |
+                      self.opt_calc_gg |
+                      self.opt_calc_box)):
             raise Exception('ERROR 97: Tests GG, UN, Box, HLT, PBT, and WLK '
                             'have undesirable properties when applied to high '
                             'dimension low sample size data, thus are disallowed '
@@ -346,20 +341,20 @@ class Power:
             unirep.firstuni(sigma_star, num_col_u)
 
         if self.opt_calc_collapse:
-            special()
+            multirep.special()
 
         if self.opt_calc_hlt:
-            hlt()
+            multirep.hlt()
 
         if self.opt_calc_pbt:
-            pbt()
+            multirep.pbt()
 
         if self.opt_calc_wlk:
-            wlk()
+            multirep.wlk()
 
         if self.opt_calc_un:
             exeps = 1
-            lastuni()
+            unirep.lastuni()
 
         if total_sample_size - rank_x <= 0:
             exeps = float('nan')
@@ -368,23 +363,23 @@ class Power:
                 exeps = unirep.hfexeps()
                 if IP.ip_plan:
                     eps_ip = unirep.hfexeps()
-                lastuni()
+                unirep.lastuni()
 
             if self.opt_calc_cm:
                 exeps = unirep.cmexeps()
                 if IP.ip_plan:
                     eps_ip = unirep.cmexeps()
-                lastuni()
+                unirep.lastuni()
 
             if self.opt_calc_gg:
                 exeps = unirep.ggexeps()
                 if IP.ip_plan:
                     eps_ip = unirep.ggexeps()
-                lastuni()
+                unirep.lastuni()
 
             if self.opt_calc_box:
                 exeps = 1 / num_col_u
-                lastuni()
+                unirep.lastuni()
 
 
 
@@ -472,8 +467,8 @@ class Power:
                                     'specify OPT_ON= {UNIFORCE};  If you do not wish to compute power for UNIREP '
                                     'tests, specify OPT_OFF = {GG HF UN BOX}; .')
                 if self.opt_orthu and not self.opt_uniforce:
-                    # TODO
-                    u_temp = gsorth()
+                    # TODO QR decomposition, Gram-Schmidt orthonormal factorization difference
+                    u_temp, t_matrix = np.linalg.qr(self.u_matrix)
                     if (np.shape(self.u_matrix)[1] > 1 and max(
                                 u_temp.T * np.ones((np.shape(self.beta)[1], 1))) > np.sqrt(self.tolerance)):
                         raise Exception('ERROR 51: You have specified option ORTHU so that the program will provide a '
@@ -485,6 +480,4 @@ class Power:
                                   'orthonormal matrix [U`U = cI] and orthogonal to a Px1 column of 1 [U`1 = 0]. The U '
                                   'matrix specified does not have these properties.  A new U matrix with these '
                                   'properties was created from your input and used in UNIREP calculations')
-
-
 

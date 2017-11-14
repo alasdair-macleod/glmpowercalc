@@ -1,6 +1,5 @@
 from unittest import TestCase
-
-from glmpowercalc.constants import Constants
+from glmpowercalc.calculation_state import CalculationState
 from glmpowercalc.glmmpcl import glmmpcl
 
 
@@ -11,19 +10,20 @@ class TestGlmmpcl(TestCase):
         This should return the expected value
         """
 
-        expected = (0.9999379, 1, Constants.FMETHOD_NOAPPROXIMATION, Constants.FMETHOD_NOAPPROXIMATION, 105.66408, 315.62306)
-        result = glmmpcl(alphatest=0.05,
+        expected = (0.9999379, 1, 1, 1, 105.66408, 315.62306)
+        powerwarn = CalculationState(0.01)
+        result = glmmpcl(f_a=10,
+                         alphatest=0.05,
                          dfh=20,
                          n2=30,
                          dfe2=28,
-                         cl_type=Constants.CLTYPE_DESIRED_KNOWN,
+                         cl_type=1,
                          n_est=20,
                          rank_est=1,
                          alpha_cl=0.048,
                          alpha_cu=0.052,
                          tolerance=0.01,
-                         power=0.9,
-                         omega=200)
+                         powerwarn=powerwarn)
         actual = (round(result[0], 7),
                   result[1],
                   result[2],
