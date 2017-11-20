@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 from glmpowercalc.constants import Constants
@@ -224,7 +225,7 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
             error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
             n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
             cl_type, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, powerwarn, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+            exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
             unirepmethod):
     """
     Univariate STEP 3
@@ -252,14 +253,14 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
     :param exeps: expected value epsilon estimator
     :param eps: epsilon calculated from U`*SIGMA*U
     :param alpha_scalar: Type I error rates
-    :param powerwarn: vector of power calculation warning counts
     :return:
     """
 
     nue = total_N - rank_X
 
     if rank_U > nue and (opt_calc_un or opt_calc_gg or opt_calc_box):
-        powerwarn.directfwarn(23)
+        warnings.warn('PowerWarn23: Power is missing, because Uncorrected, Geisser-Greenhouse and Box tests are '
+                      'poorly behaved (super low power and test size) when B > N-R, i.e., HDLSS.')
         raise Exception("#TODO what kind of exception")
 
     if np.isnan(exeps) or nue <= 0:
@@ -384,10 +385,10 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
     # Error checking
     if e_1_2 < 1 / rank_U:
         e_1_2 = 1 / rank_U
-        powerwarn.directfwarn(17)
+        warnings.warn('PowerWarn17: The approximate expected value of estimated epsilon was truncated up to 1/B.')
     if e_1_2 > 1:
         e_1_2 = 1
-        powerwarn.directfwarn(18)
+        warnings.warn('PowerWarn18: The approximate expected value of estimated epsilon was truncated down to 1.')
 
     # Obtain noncentrality and critical value for power point estimate
     omega = e_3_5 * q2 / lambar
@@ -413,7 +414,7 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         # TODO cdfpowr = qprob()
         cdfpowr = float("nan")
         if np.isnan(cdfpowr):
-            powerwarn.directfwarn(19)
+            warnings.warn('PowerWarn19: Power missing due to Davies" algorithm fail.')
         else:
             power = 1 - cdfpowr
 
@@ -425,7 +426,6 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         df1 = undf1 * e_3_5
         df2 = undf2 * e_4
         prob, fmethod = probf(fcrit, df1, df2, omega)
-        powerwarn.fwarn(fmethod, 1)
         if fmethod == Constants.FMETHOD_NORMAL_LR and prob == 1:
             power = alpha_scalar
         else:
@@ -450,7 +450,6 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
             chi_l = chi2.ppf(alpha_cl, cl1df)
             noncen_l = omega * (chi_l / cl1df)
             prob_l, fmethod_l = probf(fcrit, df1, df2, noncen_l)
-            powerwarn.fwarn(fmethod_l, 2)
 
         if fmethod_l == Constants.FMETHOD_NORMAL_LR and prob_l == 1:
             power_l = alpha_scalar
@@ -466,7 +465,6 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
             chi_u = chi2.ppf(1 - alpha_cu, cl1df)
             noncen_u = omega * (chi_u / cl1df)
             prob_u, fmethod_u = probf(fcrit, df1, df2, noncen_u)
-            powerwarn.fwarn(fmethod_u, 2)
 
         if fmethod_u == Constants.FMETHOD_NORMAL_LR and prob_u == 1:
             power_u = alpha_scalar

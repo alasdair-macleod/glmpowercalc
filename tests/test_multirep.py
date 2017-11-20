@@ -12,8 +12,8 @@ class TestMultirep(TestCase):
 
         expected   = (np.array([0.52768]), np.array([0.69772]), np.array([0.86495]))
         eval_HINVE = np.array([0.6])
-        CL= CL()
-        result     = hlt(2, 1, 2, 5, eval_HINVE, Constants.MULTI_HLT_MCKEON_OS, CL, Scalar)
+        result     = hlt(2, 1, 2, 5, eval_HINVE, 0.5, Constants.MULTI_HLT_MCKEON_OS,
+                         Constants.CLTYPE_DESIRED_KNOWN, 5, 2, 0.048, 0.052, 0.0001)
         actual = (np.round(result[0], 5),
                   np.round(result[1], 5),
                   np.round(result[2], 5))
@@ -26,8 +26,8 @@ class TestMultirep(TestCase):
 
         expected = (np.array([0.52768]), np.array([0.69772]), np.array([0.86495]))
         eval_HINVE=np.array([0.6])
-        result = pbt(2, 1, 2, 5, eval_HINVE, Constants.MULTI_PBT_MULLER,
-                     0.048)
+        result = pbt(2, 1, 2, 5, eval_HINVE, 0.5, Constants.MULTI_PBT_MULLER,
+                     Constants.CLTYPE_DESIRED_KNOWN, 5, 2, 0.048, 0.052, 0.0001)
         actual = (np.round(result[0], 5),
                   np.round(result[1], 5),
                   np.round(result[2], 5))
@@ -40,8 +40,8 @@ class TestMultirep(TestCase):
 
         expected = (0.52768, 0.69772, 0.86495)
         eval_HINVE = np.array([0.6])
-        result = wlk(2, 1, 2, 5, eval_HINVE, Constants.MULTI_WLK_RAO,
-                     0.0001)
+        result = wlk(2, 1, 2, 5, eval_HINVE, 0.5, Constants.MULTI_WLK_RAO,
+                     Constants.CLTYPE_DESIRED_KNOWN, 5, 2, 0.048, 0.052, 0.0001)
         actual = (np.round(result[0], 5),
                   np.round(result[1], 5),
                   np.round(result[2], 5))
@@ -55,7 +55,8 @@ class TestMultirep(TestCase):
 
         expected = (0.52768, 0.69772, 0.86495)
         eval_HINVE = np.array([0.6])
-        result = special(2, 1, 2, 5, eval_HINVE)
+        result = special(2, 1, 2, 5, eval_HINVE, 0.5,
+                         Constants.CLTYPE_DESIRED_KNOWN, 5, 2, 0.048, 0.052, 0.0001)
         actual = (np.round(result[0], 5),
                   np.round(result[1], 5),
                   np.round(result[2], 5))

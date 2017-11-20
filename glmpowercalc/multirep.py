@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 from glmpowercalc.constants import Constants
@@ -7,7 +9,7 @@ from glmpowercalc.glmmpcl import glmmpcl
 
 
 def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiHLT,
-        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
+        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance):
     """
     This module calculates power for Hotelling-Lawley trace
     based on the Pillai F approximation. HLT is the "population value"
@@ -28,7 +30,6 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiHLT,
     :param alpha_cl:
     :param alpha_cu:
     :param tolerance:
-    :param powerwarn: calculation_state object
     :return: power, power for Hotelling-Lawley trace & CL if requested
     """
     min_rank_C_U = min(rank_C, rank_U)
@@ -50,7 +51,7 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiHLT,
     # df2 need to > 0 and eigenvalues not missing
     if df2 <= 0 or np.isnan(eval_HINVE[0]):
         power = float('nan')
-        powerwarn.directfwarn(15)
+        warnings.warn('PowerWarn15: Power is missing because because the noncentrality could not be computed.')
     else:
         if (MultiHLT == Constants.MULTI_HLT_PILLAI_OS or
                 MultiHLT == Constants.MULTI_HLT_MCKEON_OS) or min_rank_C_U == 1:
@@ -60,16 +61,16 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiHLT,
             hlt = eval_HINVE
             omega = df2 * (hlt / min_rank_C_U)
 
-        power = multi_power(alphascalar, df1, df2, omega, powerwarn)
+        power, fmethod = multi_power(alphascalar, df1, df2, omega)
 
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est, rank_est,
-                                                                            alpha_cl, alpha_cu, tolerance, powerwarn, power, omega)
+                                                                         alpha_cl, alpha_cu, tolerance, power, omega)
 
     return power_l, power, power_u
 
 
 def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiPBT,
-        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
+        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance):
     """
     This module calculates power for Pillai-Bartlett trace based on the
     F approx. method.  V is the "population value" of PBT,
@@ -90,7 +91,6 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiPBT,
     :param alpha_cl:
     :param alpha_cu:
     :param tolerance:
-    :param powerwarn: calculation_state object
     :return: power, power for Pillai-Bartlett trace & CL if requested
     """
 
@@ -117,7 +117,7 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiPBT,
 
     if df2 <= 0 or np.isnan(eval_HINVE[0]):
         power = float('nan')
-        powerwarn.directfwarn(15)
+        warnings.warn('PowerWarn15: Power is missing because because the noncentrality could not be computed.')
     else:
         if (MultiPBT == Constants.MULTI_PBT_PILLAI_OS or MultiPBT == Constants.MULTI_PBT_MULLER_OS)\
                 or min(rank_U, rank_C) == 1:
@@ -136,17 +136,16 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiPBT,
             else:
                 omega = df2 * v / (min(rank_C, rank_U) - v)
 
-            power = multi_power(alphascalar, df1, df2, omega, powerwarn)
+            power, fmethod = multi_power(alphascalar, df1, df2, omega)
 
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est,
                                                                          rank_est,
-                                                                         alpha_cl, alpha_cu, tolerance, powerwarn,
-                                                                         power, omega)
+                                                                         alpha_cl, alpha_cu, tolerance, power, omega)
     return power_l, power, power_u
 
 
 def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiWLK,
-        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
+        cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance):
     """
     This module calculates power for Wilk's Lambda based on
     the F approx. method.  W is the "population value" of Wilks` Lambda,
@@ -168,7 +167,6 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiWLK,
     :param alpha_cl:
     :param alpha_cu:
     :param tolerance:
-    :param powerwarn: calculation_state object
     :return: power, power for Hotelling-Lawley trace & CL if requested
     """
     min_rank_C_U = min(rank_C, rank_U)
@@ -182,7 +180,7 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiWLK,
     #       = 4  Rao (1951) two moment null approx + OS noncen mult
     if np.isnan(eval_HINVE[0]):
         w = float('nan')
-        powerwarn.directfwarn(15)
+        warnings.warn('PowerWarn15: Power is missing because because the noncentrality could not be computed.')
     else:
         if MultiWLK == Constants.MULTI_WLK_RAO or MultiWLK == Constants.MULTI_WLK_RAO_OS or min_rank_C_U == 1:
             w = np.exp(np.sum(-np.log(np.ones((min_rank_C_U, 1)) + eval_HINVE * (total_N - rank_X)/total_N)))
@@ -213,20 +211,19 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiWLK,
 
     if df2 <= 0 or np.isnan(w) or np.isnan(omega):
         power = float('nan')
-        powerwarn.directfwarn(15)
+        warnings.warn('PowerWarn15: Power is missing because because the noncentrality could not be computed.')
     else:
-        power = multi_power(alphascalar, df1, df2, omega, powerwarn)
+        power, fmethod = multi_power(alphascalar, df1, df2, omega)
 
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est,
                                                                          rank_est,
-                                                                         alpha_cl, alpha_cu, tolerance, powerwarn,
-                                                                         power, omega)
+                                                                         alpha_cl, alpha_cu, tolerance, power, omega)
     return power_l, power, power_u
 
 
 
 def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar,
-            cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance, powerwarn):
+            cl_type, n_est, rank_est, alpha_cl, alpha_cu, tolerance):
     """
     This module performs two disparate tasks. For B=1 (UNIVARIATE
     TEST), the powers are calculated more efficiently. For A=1 (SPECIAL
@@ -248,7 +245,6 @@ def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar,
     :param alpha_cl:
     :param alpha_cu:
     :param tolerance:
-    :param powerwarn: calculation_state object
     :return: power, power for Hotelling-Lawley trace & CL if requested
     """
     df1 = rank_C * rank_U
@@ -256,26 +252,25 @@ def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar,
 
     if df2 <= 0 or np.isnan(eval_HINVE[0]):
         power = float('nan')
-        powerwarn.directfwarn(15)
+        warnings.warn('PowerWarn15: Power is missing because because the noncentrality could not be computed.')
     else:
         omega = eval_HINVE[0] * (total_N - rank_X)
-        power = multi_power(alphascalar, df1, df2, omega, powerwarn)
+        power, fmethod = multi_power(alphascalar, df1, df2, omega)
 
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est,
                                                                          rank_est,
-                                                                         alpha_cl, alpha_cu, tolerance, powerwarn,
-                                                                         power, omega)
+                                                                         alpha_cl, alpha_cu, tolerance, power, omega)
     return power_l, power, power_u
 
 
-def multi_power(alphascalar, df1, df2, omega, powerwarn):
+def multi_power(alphascalar, df1, df2, omega):
     """ The common part for these four multirep methods
-        Computing power """
+        Computing power
+        :rtype: object"""
     fcrit = finv(1 - alphascalar, df1, df2)
     prob, fmethod = probf(fcrit, df1, df2, omega)
-    powerwarn.fwarn(fmethod, 1)
     if fmethod == Constants.FMETHOD_NORMAL_LR and prob == 1:
         power = alphascalar
     else:
         power = 1 - prob
-    return power
+    return power, fmethod

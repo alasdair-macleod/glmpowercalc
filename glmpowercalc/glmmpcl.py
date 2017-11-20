@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from scipy.stats import chi2
 from scipy import special
@@ -8,7 +9,7 @@ from glmpowercalc.probf import probf
 
 
 def glmmpcl(alphatest, dfh, n2, dfe2, cl_type, n_est, rank_est,
-            alpha_cl, alpha_cu, tolerance, powerwarn, power, omega):
+            alpha_cl, alpha_cu, tolerance, power, omega):
     """
     This module computes confidence intervals for noncentrality and
     power for a General Linear Hypothesis (GLH  Ho:C*beta=theta0) test
@@ -38,7 +39,6 @@ def glmmpcl(alphatest, dfh, n2, dfe2, cl_type, n_est, rank_est,
     :param alpha_cl: Lower tail probability for confidence interval
     :param alpha_cu: Upper tail probability for confidence interval
     :param tolerance:
-    :param powerwarn: calculation_state object
     :return:
         power_l, power confidence interval lower bound
         power_u, power confidence interval upper bound
@@ -50,40 +50,39 @@ def glmmpcl(alphatest, dfh, n2, dfe2, cl_type, n_est, rank_est,
         noncen_u, noncentrality confidence interval upper bound
         powerwarn, vector of power calculation warning counts
     """
-    if cl_type == Constants.CLTYPE_DESIRED_KNOWN | cl_type == Constants.CLTYPE_DESIRED_ESTIMATE:
+    if cl_type == Constants.CLTYPE_DESIRED_KNOWN or cl_type == Constants.CLTYPE_DESIRED_ESTIMATE:
         if np.isnan(power):
-            powerwarn.directfwarn(16)
+            warnings.warn('Powerwarn16: Confidence limits are missing because power is missing.')
         else:
             f_a = omega / dfh
             dfe1, fcrit, noncen_e = calc_noncentrality(alphatest, dfe2, dfh, f_a, n_est, rank_est)
             noncen_l = lowerbound_noncentrality(alpha_cl, cl_type, dfe1, dfh, f_a, noncen_e, tolerance)
-            fmethod_l, power_l = lowerbound_power(alpha_cl, alphatest, dfe2, dfh, fcrit, noncen_l, powerwarn, tolerance)
+            fmethod_l, power_l = lowerbound_power(alpha_cl, alphatest, dfe2, dfh, fcrit, noncen_l, tolerance)
             noncen_u = upperbound_noncentrality(alpha_cu, cl_type, dfe1, dfh, f_a, noncen_e, tolerance)
-            fmethod_u, power_u = upperbound_power(alpha_cu, alphatest, dfe2, dfh, fcrit, noncen_u, powerwarn, tolerance)
+            fmethod_u, power_u = upperbound_power(alpha_cu, alphatest, dfe2, dfh, fcrit, noncen_u, tolerance)
 
-            warn_conservative_ci(alpha_cl, cl_type, n2, n_est, noncen_l, noncen_u, powerwarn)
+            warn_conservative_ci(alpha_cl, cl_type, n2, n_est, noncen_l, noncen_u)
 
             return power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u
 
 
-def warn_conservative_ci(alpha_cl, cl_type, n2, n_est, noncen_l, noncen_u, powerwarn):
+def warn_conservative_ci(alpha_cl, cl_type, n2, n_est, noncen_l, noncen_u):
     """warning for conservative confidence interval"""
-    if (cl_type == Constants.CLTYPE_DESIRED_KNOWN |
+    if (cl_type == Constants.CLTYPE_DESIRED_KNOWN or
             cl_type == Constants.CLTYPE_DESIRED_ESTIMATE) and n2 != n_est:
         if alpha_cl > 0 and noncen_l == 0:
-            powerwarn.directfwarn(5)
+            warnings.warn('PowerWarn5: The lower confidence limit on power is conservative.')
         if alpha_cl == 0 and noncen_u == 0:
-            powerwarn.directfwarn(10)
+            warnings.warn('PowerWarn10: The upper confidence limit on power is conservative.')
 
 
-def upperbound_power(alpha_cu, alphatest, dfe2, dfh, fcrit, noncen_u, powerwarn, tolerance):
+def upperbound_power(alpha_cu, alphatest, dfe2, dfh, fcrit, noncen_u, tolerance):
     """Calculate upper bound for power"""
     if alpha_cu <= tolerance:
         prob = 0
         fmethod_u = Constants.FMETHOD_MISSING
     else:
         prob, fmethod_u = probf(fcrit, dfh, dfe2, noncen_u)
-        powerwarn.fwarn(fmethod_u, 3)
     if fmethod_u == Constants.FMETHOD_NORMAL_LR and prob == 1:
         power_u = alphatest
     else:
@@ -91,14 +90,13 @@ def upperbound_power(alpha_cu, alphatest, dfe2, dfh, fcrit, noncen_u, powerwarn,
     return fmethod_u, power_u
 
 
-def lowerbound_power(alpha_cl, alphatest, dfe2, dfh, fcrit, noncen_l, powerwarn, tolerance):
+def lowerbound_power(alpha_cl, alphatest, dfe2, dfh, fcrit, noncen_l, tolerance):
     """Calculate lower bound for power"""
     if alpha_cl <= tolerance:
         prob = 1 - alphatest
         fmethod_l = Constants.FMETHOD_MISSING
     else:
         prob, fmethod_l = probf(fcrit, dfh, dfe2, noncen_l)
-        powerwarn.fwarn(fmethod_l, 2)
     if fmethod_l == Constants.FMETHOD_NORMAL_LR and prob == 1:
         power_l = alphatest
     else:
