@@ -115,7 +115,7 @@ class Power:
         self.CL = CL()
         self.IP = IP()
 
-    def check(self):
+    def power(self):
 
         if self.CL.cl_type == Constants.CLTYPE_NOT_DESIRED and self.opt_noncencl:
             raise Exception("ERROR 83: NONCENCL is not a valid option when CL not desired.")
@@ -242,9 +242,11 @@ class Power:
         if rank_m != num_row_c:
             raise Exception('ERROR 49: M = C(GINV(X`X))C` must be full rank to ensure testability of CBETAU = THETA0.')
 
+        # Create Orthonormal U for UNIREP test power calculations
+        u_orth = self.orthonormal_u()
+
         # TODO the whole opt stuff
         self.option_check(min_rank_c_u, num_col_u, num_row_c)
-
 
         #
         # prepare for power calculation
@@ -270,16 +272,14 @@ class Power:
             warnings.warn('WARNING 13: SIGSCAL and RHOSCAL produce a correlation with absolute value = 1 .')
 
         #   create new sigma from rho
-        # TODO need checked u matrix here
-        sigma_star = u_matrix.T * (np.diag(stdev_scaled) * (rho_offdiag_symm + np.identity(np.shape(self.beta)[1]))
-                                   * np.diag(stdev_scaled)) * u_matrix
+        sigma_star = u_orth.T * (np.diag(stdev_scaled) * (rho_offdiag_symm + np.identity(np.shape(self.beta)[1]))
+                                   * np.diag(stdev_scaled)) * u_orth
         eigval_sigma_star, eigvec_sigma_star = np.linalg.eig(sigma_star)
         rank_sigma_star = ranksymm(sigma_star)
 
         # 3.Beta
         beta_scaled = self.beta * self.beta_scalar
-        # TODO need checked u matrix here
-        theta = self.c_matrix * beta_scaled * u_matrix
+        theta = self.c_matrix * beta_scaled * u_orth
         essh = (theta - self.theta_zero).T * np.linalg.solve(m_matrix, np.identity(np.shape(m_matrix)[0])) \
                * (theta - self.theta_zero)
 
@@ -381,7 +381,52 @@ class Power:
                 exeps = 1 / num_col_u
                 unirep.lastuni()
 
+    def orthonormal_u(self):
+        if self.opt_uniforce:
+            warnings.warn('WARNING 17: You have specified the option UNIFORCE, which allows power calculations to '
+                          'continue without a U matrix that is orthonormal and orthogonal to a Px1 column of 1. This '
+                          'option should be used WITH CAUTION. The user accepts responsibility for the results being '
+                          'the ones desired.')
+        u_orth = self.u_matrix
+        if self.opt_calc_un or \
+                self.opt_calc_hf or \
+                self.opt_calc_cm or \
+                self.opt_calc_gg or \
+                self.opt_calc_box:
 
+            upu = (self.u_matrix.T * self.u_matrix + (self.u_matrix.T * self.u_matrix).T) / 2
+
+            if upu[0, 0] != 0:
+                upu = upu / upu[0, 0]
+            udif = abs(upu - np.identity(np.shape(self.u_matrix)[1]))
+
+            if (max(udif) > np.sqrt(self.tolerance)) or \
+                    (np.shape(self.u_matrix)[1] > 1 and max(
+                            self.u_matrix.T * np.ones((np.shape(self.beta)[1], 1))) > np.sqrt(self.tolerance)):
+                if not self.opt_orthu and not self.opt_uniforce:
+                    raise Exception('ERROR 50: For univariate repeated measures, U must be proportional to an '
+                                    'orthonormal matrix [U`U = cI] and orthogonal to a Px1 column of 1 [U`1 = 0]. The '
+                                    'U matrix specified does not have these properties. To have this program provide '
+                                    'a U matrix with the required properties, specify OPT_ON= {ORTHU}; . To allow '
+                                    'power calculations to continue without a U matrix with these properties, '
+                                    'specify OPT_ON= {UNIFORCE};  If you do not wish to compute power for UNIREP '
+                                    'tests, specify OPT_OFF = {GG HF UN BOX}; .')
+                if self.opt_orthu and not self.opt_uniforce:
+                    # TODO QR decomposition, Gram-Schmidt orthonormal factorization difference
+                    u_orth, t_matrix = np.linalg.qr(self.u_matrix)
+                    if (np.shape(self.u_matrix)[1] > 1 and max(
+                                u_orth.T * np.ones((np.shape(self.beta)[1], 1))) > np.sqrt(self.tolerance)):
+                        raise Exception('ERROR 51: You have specified option ORTHU so that the program will provide a '
+                                        'U that is proportional to to an orthonormal matrix and orthogonal to a Px1 '
+                                        'column of 1. The original U given cannot be made to be orthogonal to a Px1 '
+                                        'column of 1. Choose a different U matrix.')
+                    cbetau = self.c_matrix * self.beta * u_orth
+                    warnings.warn('WARNING 12: For univariate repeated measures, U must be proportional to an '
+                                  'orthonormal matrix [U`U = cI] and orthogonal to a Px1 column of 1 [U`1 = 0]. The U '
+                                  'matrix specified does not have these properties.  A new U matrix with these '
+                                  'properties was created from your input and used in UNIREP calculations')
+
+        return u_orth
 
     def option_check(self, min_rank_c_u, num_col_u, num_row_c):
         if not (self.opt_calc_collapse |
@@ -431,53 +476,4 @@ class Power:
                           'program failure due to insufficient memory, thus turning off this option should be done '
                           'WITH CAUTION. The user accepts responsbility for potential program failure due to '
                           'insufficient memory.')
-
-
-    # Create Orthonormal U for UNIREP test power calculations
-    def orthonormal_u(self):
-        if self.opt_uniforce:
-            warnings.warn('WARNING 17: You have specified the option UNIFORCE, which allows power calculations to '
-                          'continue without a U matrix that is orthonormal and orthogonal to a Px1 column of 1. This '
-                          'option should be used WITH CAUTION. The user accepts responsibility for the results being '
-                          'the ones desired.')
-
-        u_temp = self.u_matrix
-
-        if self.opt_calc_un or \
-                self.opt_calc_hf or \
-                self.opt_calc_cm or \
-                self.opt_calc_gg or \
-                self.opt_calc_box:
-
-            upu = (self.u_matrix.T * self.u_matrix + (self.u_matrix.T * self.u_matrix).T) / 2
-
-            if upu[0, 0] != 0:
-                upu = upu / upu[0, 0]
-            udif = abs(upu - np.identity(np.shape(self.u_matrix)[1]))
-
-            if (max(udif) > np.sqrt(self.tolerance)) or \
-                    (np.shape(self.u_matrix)[1] > 1 and max(
-                            self.u_matrix.T * np.ones((np.shape(self.beta)[1], 1))) > np.sqrt(self.tolerance)):
-                if not self.opt_orthu and not self.opt_uniforce:
-                    raise Exception('ERROR 50: For univariate repeated measures, U must be proportional to an '
-                                    'orthonormal matrix [U`U = cI] and orthogonal to a Px1 column of 1 [U`1 = 0]. The '
-                                    'U matrix specified does not have these properties. To have this program provide '
-                                    'a U matrix with the required properties, specify OPT_ON= {ORTHU}; . To allow '
-                                    'power calculations to continue without a U matrix with these properties, '
-                                    'specify OPT_ON= {UNIFORCE};  If you do not wish to compute power for UNIREP '
-                                    'tests, specify OPT_OFF = {GG HF UN BOX}; .')
-                if self.opt_orthu and not self.opt_uniforce:
-                    # TODO QR decomposition, Gram-Schmidt orthonormal factorization difference
-                    u_temp, t_matrix = np.linalg.qr(self.u_matrix)
-                    if (np.shape(self.u_matrix)[1] > 1 and max(
-                                u_temp.T * np.ones((np.shape(self.beta)[1], 1))) > np.sqrt(self.tolerance)):
-                        raise Exception('ERROR 51: You have specified option ORTHU so that the program will provide a '
-                                        'U that is proportional to to an orthonormal matrix and orthogonal to a Px1 '
-                                        'column of 1. The original U given cannot be made to be orthogonal to a Px1 '
-                                        'column of 1. Choose a different U matrix.')
-                    cbetau = self.c_matrix * self.beta * u_temp
-                    warnings.warn('WARNING 12: For univariate repeated measures, U must be proportional to an '
-                                  'orthonormal matrix [U`U = cI] and orthogonal to a Px1 column of 1 [U`1 = 0]. The U '
-                                  'matrix specified does not have these properties.  A new U matrix with these '
-                                  'properties was created from your input and used in UNIREP calculations')
 
