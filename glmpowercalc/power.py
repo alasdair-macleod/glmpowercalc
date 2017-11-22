@@ -271,9 +271,9 @@ class Power:
         if abs(rho_offdiag_symm).max() == 1:
             warnings.warn('WARNING 13: SIGSCAL and RHOSCAL produce a correlation with absolute value = 1 .')
 
-        #   create new sigma from rho
+        # create new sigma from rho
         sigma_star = u_orth.T * (np.diag(stdev_scaled) * (rho_offdiag_symm + np.identity(np.shape(self.beta)[1]))
-                                   * np.diag(stdev_scaled)) * u_orth
+                                 * np.diag(stdev_scaled)) * u_orth
         eigval_sigma_star, eigvec_sigma_star = np.linalg.eig(sigma_star)
         rank_sigma_star = ranksymm(sigma_star)
 
@@ -290,17 +290,17 @@ class Power:
                           'responsible for correct interpretation of the results.')
 
         error_sum_square = sigma_star * (total_sample_size - rank_x)  # E
-        hypo_sum_square = self.repn * essh                            # H
+        hypo_sum_square = self.repn * essh  # H
 
         if num_col_u > total_sample_size - rank_x and \
                 (total_sample_size - rank_x > 0 and
                      (self.opt_calc_collapse |
-                      self.opt_calc_hlt |
-                      self.opt_calc_pbt |
-                      self.opt_calc_wlk |
-                      self.opt_calc_un |
-                      self.opt_calc_gg |
-                      self.opt_calc_box)):
+                          self.opt_calc_hlt |
+                          self.opt_calc_pbt |
+                          self.opt_calc_wlk |
+                          self.opt_calc_un |
+                          self.opt_calc_gg |
+                          self.opt_calc_box)):
             raise Exception('ERROR 97: Tests GG, UN, Box, HLT, PBT, and WLK '
                             'have undesirable properties when applied to high '
                             'dimension low sample size data, thus are disallowed '
@@ -311,7 +311,7 @@ class Power:
                             'THETA0.')
 
         # 5.Eigenvalues for H*INV(E)
-        if self.opt_calc_collapse | self.opt_calc_hlt |self.opt_calc_pbt | self.opt_calc_wlk:
+        if self.opt_calc_collapse | self.opt_calc_hlt | self.opt_calc_pbt | self.opt_calc_wlk:
             # TODO can we raise an Exception for this case?
             if total_sample_size - rank_x <= 0:
                 eval = float('nan')
@@ -337,49 +337,241 @@ class Power:
 
         #
         # Compute power
-        if self.opt_calc_un | self.opt_calc_hf | self.opt_calc_cm | self.opt_calc_gg | self.opt_calc_box:
-            unirep.firstuni(sigma_star, num_col_u)
-
+        # MultiRep
         if self.opt_calc_collapse:
-            multirep.special(rank_c, rank_u, rank_x, total_sample_size, eval, self.alpha, self.CL )
+            special_power = multirep.special(rank_C=rank_c,
+                                             rank_U=rank_u,
+                                             rank_X=rank_x,
+                                             total_N=total_sample_size,
+                                             eval_HINVE=eval,
+                                             alphascalar=self.alpha,
+                                             cl_type=self.CL.cl_type,
+                                             n_est=self.CL.n_est,
+                                             rank_est=self.CL.rank_est,
+                                             alpha_cl=self.CL.alpha_cl,
+                                             alpha_cu=self.CL.alpha_cu,
+                                             tolerance=self.tolerance)
+            return special_power
 
         if self.opt_calc_hlt:
-            multirep.hlt()
+            hlt_power = multirep.hlt(rank_C=rank_c,
+                                     rank_U=rank_u,
+                                     rank_X=rank_x,
+                                     total_N=total_sample_size,
+                                     eval_HINVE=eval,
+                                     alphascalar=self.alpha,
+                                     MultiHLT=self.MultiHLT,
+                                     cl_type=self.CL.cl_type,
+                                     n_est=self.CL.n_est,
+                                     rank_est=self.CL.rank_est,
+                                     alpha_cl=self.CL.alpha_cl,
+                                     alpha_cu=self.CL.alpha_cu,
+                                     tolerance=self.tolerance)
+            return hlt_power
 
         if self.opt_calc_pbt:
-            multirep.pbt()
+            pbt_power = multirep.pbt(rank_C=rank_c,
+                                     rank_U=rank_u,
+                                     rank_X=rank_x,
+                                     total_N=total_sample_size,
+                                     eval_HINVE=eval,
+                                     alphascalar=self.alpha,
+                                     MultiPBT=self.MultiPBT,
+                                     cl_type=self.CL.cl_type,
+                                     n_est=self.CL.n_est,
+                                     rank_est=self.CL.rank_est,
+                                     alpha_cl=self.CL.alpha_cl,
+                                     alpha_cu=self.CL.alpha_cu,
+                                     tolerance=self.tolerance)
+            return pbt_power
 
         if self.opt_calc_wlk:
-            multirep.wlk()
+            wlk_power = multirep.wlk(rank_C=rank_c,
+                                     rank_U=rank_u,
+                                     rank_X=rank_x,
+                                     total_N=total_sample_size,
+                                     eval_HINVE=eval,
+                                     alphascalar=self.alpha,
+                                     MultiWLK=self.MultiWLK,
+                                     cl_type=self.CL.cl_type,
+                                     n_est=self.CL.n_est,
+                                     rank_est=self.CL.rank_est,
+                                     alpha_cl=self.CL.alpha_cl,
+                                     alpha_cu=self.CL.alpha_cu,
+                                     tolerance=self.tolerance)
+            return wlk_power
+
+        # UniRep
+        if self.opt_calc_un | self.opt_calc_hf | self.opt_calc_cm | self.opt_calc_gg | self.opt_calc_box:
+            d, mtp, eps, deigval, slam1, slam2, slam3 = unirep.firstuni(sigma_star, num_col_u)
 
         if self.opt_calc_un:
-            exeps = 1
-            unirep.lastuni()
+            un_power = unirep.lastuni(rank_C=rank_c,
+                                      rank_U=rank_u,
+                                      total_N=total_sample_size,
+                                      rank_X=rank_x,
+                                      error_sum_square=error_sum_square,
+                                      hypo_sum_square=hypo_sum_square,
+                                      sig_type=self.CL.sigma_type,
+                                      ip_plan=self.IP.ip_plan,
+                                      rank_ip=self.IP.rank_ip,
+                                      n_est=self.CL.n_est,
+                                      rank_est=self.CL.rank_est,
+                                      n_ip=self.IP.n_ip,
+                                      sigmastareval=eigval_sigma_star,
+                                      sigmastarevec=eigvec_sigma_star,
+                                      cl_type=self.CL.cl_type,
+                                      alpha_cl=self.CL.alpha_cl,
+                                      alpha_cu=self.CL.alpha_cu,
+                                      tolerance=self.tolerance,
+                                      round=self.round,
+                                      exeps=1,
+                                      eps=eps,
+                                      alpha_scalar=self.alpha,
+                                      opt_calc_un=self.opt_calc_un,
+                                      opt_calc_gg=self.opt_calc_gg,
+                                      opt_calc_box=self.opt_calc_box,
+                                      opt_calc_hf=self.opt_calc_hf,
+                                      opt_calc_cm=self.opt_calc_cm,
+                                      unirepmethod=self.UnirepUncorrected)
+            return un_power
 
         if total_sample_size - rank_x <= 0:
             exeps = float('nan')
         else:
             if self.opt_calc_hf:
-                exeps = unirep.hfexeps()
-                if IP.ip_plan:
-                    eps_ip = unirep.hfexeps()
-                unirep.lastuni()
+                exeps = unirep.hfexeps(sigma_star, rank_u, total_sample_size, rank_x, self.UnirepUncorrected)
+                if self.IP.ip_plan:
+                    eps = unirep.hfexeps(sigma_star, rank_u, self.IP.n_ip, self.IP.rank_ip, self.UnirepUncorrected)
+                hf_power = unirep.lastuni(rank_C=rank_c,
+                                          rank_U=rank_u,
+                                          total_N=total_sample_size,
+                                          rank_X=rank_x,
+                                          error_sum_square=error_sum_square,
+                                          hypo_sum_square=hypo_sum_square,
+                                          sig_type=self.CL.sigma_type,
+                                          ip_plan=self.IP.ip_plan,
+                                          rank_ip=self.IP.rank_ip,
+                                          n_est=self.CL.n_est,
+                                          rank_est=self.CL.rank_est,
+                                          n_ip=self.IP.n_ip,
+                                          sigmastareval=eigval_sigma_star,
+                                          sigmastarevec=eigvec_sigma_star,
+                                          cl_type=self.CL.cl_type,
+                                          alpha_cl=self.CL.alpha_cl,
+                                          alpha_cu=self.CL.alpha_cu,
+                                          tolerance=self.tolerance,
+                                          round=self.round,
+                                          exeps=exeps,
+                                          eps=eps,
+                                          alpha_scalar=self.alpha,
+                                          opt_calc_un=self.opt_calc_un,
+                                          opt_calc_gg=self.opt_calc_gg,
+                                          opt_calc_box=self.opt_calc_box,
+                                          opt_calc_hf=self.opt_calc_hf,
+                                          opt_calc_cm=self.opt_calc_cm,
+                                          unirepmethod=self.UnirepHuynhFeldt)
+                return hf_power
 
             if self.opt_calc_cm:
-                exeps = unirep.cmexeps()
-                if IP.ip_plan:
-                    eps_ip = unirep.cmexeps()
-                unirep.lastuni()
+                exeps = unirep.cmexeps(sigma_star, rank_u, total_sample_size, rank_x, self.UnirepUncorrected)
+                if self.IP.ip_plan:
+                    eps = unirep.cmexeps(sigma_star, rank_u, self.IP.n_ip, self.IP.rank_ip, self.UnirepUncorrected)
+                cm_power = unirep.lastuni(rank_C=rank_c,
+                                          rank_U=rank_u,
+                                          total_N=total_sample_size,
+                                          rank_X=rank_x,
+                                          error_sum_square=error_sum_square,
+                                          hypo_sum_square=hypo_sum_square,
+                                          sig_type=self.CL.sigma_type,
+                                          ip_plan=self.IP.ip_plan,
+                                          rank_ip=self.IP.rank_ip,
+                                          n_est=self.CL.n_est,
+                                          rank_est=self.CL.rank_est,
+                                          n_ip=self.IP.n_ip,
+                                          sigmastareval=eigval_sigma_star,
+                                          sigmastarevec=eigvec_sigma_star,
+                                          cl_type=self.CL.cl_type,
+                                          alpha_cl=self.CL.alpha_cl,
+                                          alpha_cu=self.CL.alpha_cu,
+                                          tolerance=self.tolerance,
+                                          round=self.round,
+                                          exeps=exeps,
+                                          eps=eps,
+                                          alpha_scalar=self.alpha,
+                                          opt_calc_un=self.opt_calc_un,
+                                          opt_calc_gg=self.opt_calc_gg,
+                                          opt_calc_box=self.opt_calc_box,
+                                          opt_calc_hf=self.opt_calc_hf,
+                                          opt_calc_cm=self.opt_calc_cm,
+                                          unirepmethod=self.UnirepHuynhFeldtChiMuller)
+                return cm_power
 
             if self.opt_calc_gg:
-                exeps = unirep.ggexeps()
-                if IP.ip_plan:
-                    eps_ip = unirep.ggexeps()
-                unirep.lastuni()
+                exeps = unirep.ggexeps(sigma_star, rank_u, total_sample_size, rank_x, self.UnirepHuynhFeldt)
+                if self.IP.ip_plan:
+                    eps = unirep.ggexeps(sigma_star, rank_u, self.IP.n_ip, self.IP.rank_ip, self.UnirepHuynhFeldt)
+                gg_power = unirep.lastuni(rank_C=rank_c,
+                                          rank_U=rank_u,
+                                          total_N=total_sample_size,
+                                          rank_X=rank_x,
+                                          error_sum_square=error_sum_square,
+                                          hypo_sum_square=hypo_sum_square,
+                                          sig_type=self.CL.sigma_type,
+                                          ip_plan=self.IP.ip_plan,
+                                          rank_ip=self.IP.rank_ip,
+                                          n_est=self.CL.n_est,
+                                          rank_est=self.CL.rank_est,
+                                          n_ip=self.IP.n_ip,
+                                          sigmastareval=eigval_sigma_star,
+                                          sigmastarevec=eigvec_sigma_star,
+                                          cl_type=self.CL.cl_type,
+                                          alpha_cl=self.CL.alpha_cl,
+                                          alpha_cu=self.CL.alpha_cu,
+                                          tolerance=self.tolerance,
+                                          round=self.round,
+                                          exeps=exeps,
+                                          eps=eps,
+                                          alpha_scalar=self.alpha,
+                                          opt_calc_un=self.opt_calc_un,
+                                          opt_calc_gg=self.opt_calc_gg,
+                                          opt_calc_box=self.opt_calc_box,
+                                          opt_calc_hf=self.opt_calc_hf,
+                                          opt_calc_cm=self.opt_calc_cm,
+                                          unirepmethod=self.UnirepGeisserGreenhouse)
+                return gg_power
 
             if self.opt_calc_box:
                 exeps = 1 / num_col_u
-                unirep.lastuni()
+                box_power = unirep.lastuni(rank_C=rank_c,
+                                           rank_U=rank_u,
+                                           total_N=total_sample_size,
+                                           rank_X=rank_x,
+                                           error_sum_square=error_sum_square,
+                                           hypo_sum_square=hypo_sum_square,
+                                           sig_type=self.CL.sigma_type,
+                                           ip_plan=self.IP.ip_plan,
+                                           rank_ip=self.IP.rank_ip,
+                                           n_est=self.CL.n_est,
+                                           rank_est=self.CL.rank_est,
+                                           n_ip=self.IP.n_ip,
+                                           sigmastareval=eigval_sigma_star,
+                                           sigmastarevec=eigvec_sigma_star,
+                                           cl_type=self.CL.cl_type,
+                                           alpha_cl=self.CL.alpha_cl,
+                                           alpha_cu=self.CL.alpha_cu,
+                                           tolerance=self.tolerance,
+                                           round=self.round,
+                                           exeps=exeps,
+                                           eps=eps,
+                                           alpha_scalar=self.alpha,
+                                           opt_calc_un=self.opt_calc_un,
+                                           opt_calc_gg=self.opt_calc_gg,
+                                           opt_calc_box=self.opt_calc_box,
+                                           opt_calc_hf=self.opt_calc_hf,
+                                           opt_calc_cm=self.opt_calc_cm,
+                                           unirepmethod=self.UnirepBox)
+                return box_power
 
     def orthonormal_u(self):
         if self.opt_uniforce:
@@ -476,4 +668,3 @@ class Power:
                           'program failure due to insufficient memory, thus turning off this option should be done '
                           'WITH CAUTION. The user accepts responsbility for potential program failure due to '
                           'insufficient memory.')
-

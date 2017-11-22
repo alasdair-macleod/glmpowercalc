@@ -14,7 +14,7 @@ class TestUnirep(TestCase):
                     1,
                     1.16,
                     1)
-        actual = unirep.firstuni(sigmastar=np.matrix([[1, 2], [3, 4]]),
+        actual = unirep.firstuni(sigma_star=np.matrix([[1, 2], [3, 4]]),
                                  rank_U=2)
         self.assertEqual(actual[0], expected[0])
         self.assertTrue((actual[1] == expected[1]).all())
@@ -28,13 +28,13 @@ class TestUnirep(TestCase):
     def test_Firstuni2(self):
         """ should raise error """
         with self.assertRaises(Exception):
-            actual = unirep.firstuni(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+            actual = unirep.firstuni(sigma_star=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
                                      rank_U=2)
 
     def test_hfexeps(self):
         """ should return expected value """
         expected = 0.2901679
-        actual = unirep.hfexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+        actual = unirep.hfexeps(sigma_star=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
                                 rank_U=3,
                                 total_N=20,
                                 rank_X=5,
@@ -44,7 +44,7 @@ class TestUnirep(TestCase):
     def test_cmexeps(self):
         """ should return expected value """
         expected = 0.2757015
-        actual = unirep.cmexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+        actual = unirep.cmexeps(sigma_star=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
                                 rank_U=3,
                                 total_N=20,
                                 rank_X=5,
@@ -54,7 +54,7 @@ class TestUnirep(TestCase):
     def test_ggexeps(self):
         """ should return expected value """
         expected = 0.2975125
-        actual = unirep.ggexeps(sigmastar=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
+        actual = unirep.ggexeps(sigma_star=np.matrix([[1, 2, 3], [3, 4, 5], [4, 5, 6]]),
                                 rank_U=3,
                                 total_N=20,
                                 rank_X=5,
@@ -207,7 +207,7 @@ class TestUnirep(TestCase):
 
     def test_lastuni4(self):
         """ cltype=1: should return expected value """
-        expected = (0.9802819, 0.7798431, 0.9996234)
+        expected = (0.7798431, 0.9802819, 0.9996234)
         opt_calc_un = False
         opt_calc_gg = False
         opt_calc_box = False
