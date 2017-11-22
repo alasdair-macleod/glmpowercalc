@@ -7,7 +7,7 @@ from glmpowercalc.probf import probf
 from scipy.stats import chi2
 
 
-def firstuni(sigmastar, rank_U):
+def firstuni(sigma_star, rank_U):
     """
     This module produces matrices required for Geisser-Greenhouse,
     Huynh-Feldt or uncorrected repeated measures power calculations. It
@@ -16,7 +16,7 @@ def firstuni(sigmastar, rank_U):
     (1978). Program requires that U be orthonormal and orthogonal to a
     columns of 1's.
 
-    :param sigmastar: U` * (SIGMA # SIGSCALTEMP) * U
+    :param sigma_star: U` * (SIGMA # SIGSCALTEMP) * U
     :param rank_U: rank of U matrix
 
     :return:
@@ -29,13 +29,13 @@ def firstuni(sigmastar, rank_U):
         slam3, sum of eigenvalues
     """
 
-    if rank_U != np.shape(sigmastar)[0]:
-        raise Exception("rank of U should equal to nrows of sigmastar")
+    if rank_U != np.shape(sigma_star)[0]:
+        raise Exception("rank of U should equal to nrows of sigma_star")
 
     # Get eigenvalues of covariance matrix associated with E. This is NOT
     # the USUAL sigma. This cov matrix is that of (Y-YHAT)*U, not of (Y-YHAT).
     # The covariance matrix is normalized to minimize numerical problems
-    esig = sigmastar / np.trace(sigmastar)
+    esig = sigma_star / np.trace(sigma_star)
     seigval = np.linalg.eigvals(esig)
     slam1 = np.sum(seigval) ** 2
     slam2 = np.sum(np.square(seigval))
@@ -51,7 +51,7 @@ def firstuni(sigmastar, rank_U):
     return d, mtp, eps, deigval, slam1, slam2, slam3
 
 
-def hfexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
+def hfexeps(sigma_star, rank_U, total_N, rank_X, UnirepUncorrected):
     """
 
     Univariate, HF STEP 2:
@@ -62,14 +62,14 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
       FKK = 2nd deriv of FNCT of eigenvalues
       For HF, FNCT is epsilon tilde
 
-    :param sigmastar:
+    :param sigma_star:
     :param rank_U:
     :param total_N:
     :param rank_X:
     :param UnirepUncorrected:
     :return:
     """
-    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
+    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigma_star=sigma_star,
                                                          rank_U=rank_U)
 
     # Compute approximate expected value of Huynh-Feldt estimate
@@ -102,7 +102,7 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
     e0epshf = h1 / (rank_U * h2) + (sum1 + sum2) / (total_N - rank_X)
 
     # Computation of EXP(T1) and EXP(T2)
-    esig = sigmastar / np.trace(sigmastar)
+    esig = sigma_star / np.trace(sigma_star)
     seval = np.matrix(np.linalg.eigvals(esig)).T
 
     nu = total_N - rank_X
@@ -127,14 +127,14 @@ def hfexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
     return exeps
 
 
-def cmexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
+def cmexeps(sigma_star, rank_U, total_N, rank_X, UnirepUncorrected):
     """
     Univariate, HF STEP 2 with Chi-Muller:
     This function computes the approximate expected value of
     the Huynh-Feldt estimate with the Chi-Muller results
 
 
-    :param sigmastar:
+    :param sigma_star:
     :param rank_U:
     :param total_N:
     :param rank_X:
@@ -142,7 +142,7 @@ def cmexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
     :return:
     """
 
-    exeps = hfexeps(sigmastar=sigmastar,
+    exeps = hfexeps(sigma_star=sigma_star,
                     rank_U=rank_U,
                     total_N=total_N,
                     rank_X=rank_X,
@@ -160,20 +160,20 @@ def cmexeps(sigmastar, rank_U, total_N, rank_X, UnirepUncorrected):
     return exeps
 
 
-def ggexeps(sigmastar, rank_U, total_N, rank_X, UnirepHuynhFeldt):
+def ggexeps(sigma_star, rank_U, total_N, rank_X, UnirepHuynhFeldt):
     """
     Univariate, GG STEP 2:
     This function computes the approximate expected value of the
     Geisser-Greenhouse estimate.
 
-    :param sigmastar:
+    :param sigma_star:
     :param rank_U:
     :param total_N:
     :param rank_X:
     :param UnirepHuynhFeldt:
     :return:
     """
-    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigmastar=sigmastar,
+    d, mtp, eps, deigval, slam1, slam2, slam3 = firstuni(sigma_star=sigma_star,
                                                          rank_U=rank_U)
 
     fk = np.full((d, 1), 1) * 2 * slam3 / (slam2 * rank_U) - 2 * deigval * slam1 / (rank_U * slam2 ** 2)
@@ -200,7 +200,7 @@ def ggexeps(sigmastar, rank_U, total_N, rank_X, UnirepHuynhFeldt):
     e0epsgg = eps + (sum1 + sum2) / (total_N - rank_X)
 
     # Computation of EXP(T1) and EXP(T2)
-    esig = sigmastar / np.trace(sigmastar)
+    esig = sigma_star / np.trace(sigma_star)
     seval = np.matrix(np.linalg.eigvals(esig)).T
 
     nu = total_N - rank_X
@@ -471,6 +471,6 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         else:
             power_u = 1 - prob_u
 
-        return power, power_l, power_u
-
-    return power
+        return power_l, power, power_u
+    else:
+        return power
