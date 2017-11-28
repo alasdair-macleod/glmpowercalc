@@ -6,7 +6,12 @@ from glmpowercalc.power import CL, IP, Power
 
 
 class TestPower(TestCase):
+    def test_CL(self):
+        expected = Constants.CLTYPE_NOT_DESIRED
+        actual = CL().cl_type
+        self.assertEqual(expected, actual)
+
     def test_Power(self):
-        expected = 0.9
-        actual = Power
-        self.assertEqual(expected, actual.power(self))
+        expected = 0.761158
+        actual = Power().power()[1][0][0]
+        self.assertAlmostEqual(expected, actual, places=6)
