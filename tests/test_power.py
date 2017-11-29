@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from glmpowercalc import unirep
+
 from glmpowercalc.constants import Constants
 from glmpowercalc.power import CL, IP, Power
 

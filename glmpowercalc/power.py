@@ -23,31 +23,33 @@ class CL:
         """
         self.sigma_type = sigma_type
 
-        if sigma_type:  # sigma is estimated
-            if cl_desire:  # sigma is desired
+        if cl_desire:  # sigma is desired
+            if sigma_type:  # sigma is estimated
                 if beta_type:  # beta is estimated
                     self.cl_type = Constants.CLTYPE_DESIRED_ESTIMATE
                 else:  # beta is known
                     self.cl_type = Constants.CLTYPE_DESIRED_KNOWN
+
+                assert n_est is not None
+                assert rank_est is not None
+
             else:
-                self.cl_type = Constants.CLTYPE_NOT_DESIRED
-
-            assert n_est is not None
-            assert rank_est is not None
-            self.n_est = n_est
-            self.rank_est = rank_est
-
-            if alpha_cl < 0 or \
-                            alpha_cu < 0 or \
-                            alpha_cl >= 1 or \
-                            alpha_cu >= 1 or \
-                    (alpha_cl + alpha_cu >= 1):
-                raise Exception('ERROR 35: ALPHA_CL and ALPHA_CU must both be >= 0 and <= 1.')
-            self.alpha_cl = alpha_cl
-            self.alpha_cu = alpha_cu
+                raise Exception('sigma_type need to be estimated to calculate CL')
 
         else:
-            raise Exception('sigma_type need to be estimated to calculate CL')
+            self.cl_type = Constants.CLTYPE_NOT_DESIRED
+
+        self.n_est = n_est
+        self.rank_est = rank_est
+
+        if alpha_cl < 0 or \
+                        alpha_cu < 0 or \
+                        alpha_cl >= 1 or \
+                        alpha_cu >= 1 or \
+                (alpha_cl + alpha_cu >= 1):
+            raise Exception('ERROR 35: ALPHA_CL and ALPHA_CU must both be >= 0 and <= 1.')
+        self.alpha_cl = alpha_cl
+        self.alpha_cu = alpha_cu
 
 
 class IP:
@@ -80,9 +82,13 @@ class Power:
         self.u_matrix = np.matrix(np.identity(np.shape(self.beta)[1]))
         self.theta_zero = np.zeros((np.shape(self.c_matrix)[0], np.shape(self.u_matrix)[1]))
         self.repn = np.matrix([[10]])
+        self.rep_n = 10
         self.betascal = np.matrix([[0.5]])
+        self.beta_scalar = 0.5
         self.sigscal = np.matrix([[1]])
+        self.sigma_scalar = 1
         self.rhoscal = np.matrix([[1]])
+        self.rho_scalar = 1
         self.alpha = np.matrix([[0.05]])
         self.round = 3
         self.tolerance = 1e-12
@@ -208,7 +214,7 @@ class Power:
         min_rank_c_u = min(rank_c, rank_u)  # S
         xpxginv = np.linalg.pinv(xpx)  # (Moore-Penrose) pseudo-inverse, the same method in IML--GINV()
         m_matrix = self.c_matrix * xpxginv * self.c_matrix.T
-        rank_m = ranksymm(m_matrix)
+        rank_m = ranksymm(m_matrix, self.tolerance)
 
         sigma_diag_inv = np.linalg.inv(np.diag(np.sqrt(np.diag(self.sigma))))
         rho = sigma_diag_inv * self.sigma * sigma_diag_inv
@@ -275,7 +281,7 @@ class Power:
         sigma_star = u_orth.T * (np.diag(stdev_scaled) * (rho_offdiag_symm + np.identity(np.shape(self.beta)[1]))
                                  * np.diag(stdev_scaled)) * u_orth
         eigval_sigma_star, eigvec_sigma_star = np.linalg.eig(sigma_star)
-        rank_sigma_star = ranksymm(sigma_star)
+        rank_sigma_star = ranksymm(sigma_star, self.tolerance)
 
         # 3.Beta
         beta_scaled = self.beta * self.beta_scalar
@@ -332,7 +338,7 @@ class Power:
 
                 # make vector of squared generalized canonical correlations
                 eval_pop = eval * (total_sample_size - rank_x) / total_sample_size
-                cancorr = round((eval_pop / (np.ones((1, min_rank_c_u)) + eval_pop)), self.round)
+                cancorr = np.round((eval_pop / (np.ones((1, min_rank_c_u)) + eval_pop)), self.round)
                 cancorrmax = cancorr.max()
 
         #
