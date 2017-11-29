@@ -62,8 +62,15 @@ def glmmpcl(alphatest, dfh, n2, dfe2, cl_type, n_est, rank_est,
             fmethod_u, power_u = upperbound_power(alpha_cu, alphatest, dfe2, dfh, fcrit, noncen_u, tolerance)
 
             warn_conservative_ci(alpha_cl, cl_type, n2, n_est, noncen_l, noncen_u)
+    else:
+        power_l = None
+        power_u = None
+        fmethod_l = None
+        fmethod_u = None
+        noncen_l = None
+        noncen_u = None
 
-            return power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u
+    return power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u
 
 
 def warn_conservative_ci(alpha_cl, cl_type, n2, n_est, noncen_l, noncen_u):

@@ -15,29 +15,29 @@ def ranksymm(matrix, tolerance):
            = rank of the matrix
     """
     # empty matrix
-    if matrix.matrix.shape[1] == 0:
-        raise RanksymmValidationException("ERROR 55: Matrix {0} does not exist.".format(matrix.label))
+    if np.shape(matrix)[1] == 0:
+        raise RanksymmValidationException("ERROR 55: Matrix {0} does not exist.".format(matrix))
 
     # number of rows not equal to number of columns
-    if matrix.matrix.shape[0] != matrix.matrix.shape[1]:
-        raise RanksymmValidationException("ERROR 56: Matrix {0} is not square.".format(matrix.label))
+    if np.shape(matrix)[0] != np.shape(matrix)[1]:
+        raise RanksymmValidationException("ERROR 56: Matrix {0} is not square.".format(matrix))
 
     # matrix with all missing values
-    if np.isnan(matrix.matrix).all():
-        raise RanksymmValidationException("ERROR 57: Matrix {0} is all missing values.".format(matrix.label))
+    if np.isnan(matrix).all():
+        raise RanksymmValidationException("ERROR 57: Matrix {0} is all missing values.".format(matrix))
 
-    maxabsval = abs(matrix.matrix).max()
+    maxabsval = abs(matrix).max()
 
     # matrix with all zero
     if maxabsval == 0:
-        raise RanksymmValidationException("ERROR 58: Matrix {0} has MAX(ABS(all elements)) = exact zero.".format(matrix.label))
+        raise RanksymmValidationException("ERROR 58: Matrix {0} has MAX(ABS(all elements)) = exact zero.".format(matrix))
 
-    nmatrix = matrix.matrix / maxabsval
+    nmatrix = matrix / maxabsval
     evals = np.linalg.eigvals(nmatrix)
 
     # matrix not symmetric
     if abs(nmatrix - nmatrix.T).max() >= tolerance ** 0.5:
-        raise RanksymmValidationException("ERROR 59: Matrix {0} is not symmetric within sqrt(tolerance).".format(matrix.label))
+        raise RanksymmValidationException("ERROR 59: Matrix {0} is not symmetric within sqrt(tolerance).".format(matrix))
 
     # matrix not non-negative definite
     if evals.min() < -tolerance ** 0.5:
@@ -48,7 +48,7 @@ def ranksymm(matrix, tolerance):
               matrix. This may be able to be fixed using \
               usual scaling/centering techniques. The \
               Eigenvalues/MAX(ABS(original matrix)) are: {1}. \
-              The max(abs(original matrix)) is {2}.".format(matrix.label, evals, maxabsval))
+              The max(abs(original matrix)) is {2}.".format(matrix, evals, maxabsval))
 
     rankmatrix = sum(evals >= tolerance)
     return rankmatrix
