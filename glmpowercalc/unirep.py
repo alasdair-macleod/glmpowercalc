@@ -471,6 +471,13 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         else:
             power_u = 1 - prob_u
 
-        return power_l, power, power_u
+        power_l = float(power_l)
+        power_u = float(power_u)
     else:
-        return power
+        power_l = None
+        power_u = None
+
+    power = float(power)
+
+    return {'lower': power_l, 'power': power, 'upper': power_u}
+

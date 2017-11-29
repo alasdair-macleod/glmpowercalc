@@ -66,7 +66,7 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiHLT,
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est, rank_est,
                                                                         alpha_cl, alpha_cu, tolerance, power, omega)
 
-    return power_l, power, power_u
+    return {'lower': power_l, 'power': power, 'upper': power_u}
 
 
 def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiPBT,
@@ -141,7 +141,8 @@ def pbt(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiPBT,
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est,
                                                                          rank_est,
                                                                          alpha_cl, alpha_cu, tolerance, power, omega)
-    return power_l, power, power_u
+    
+    return {'lower': power_l, 'power': power, 'upper': power_u}
 
 
 def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiWLK,
@@ -218,7 +219,8 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar, MultiWLK,
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est,
                                                                          rank_est,
                                                                          alpha_cl, alpha_cu, tolerance, power, omega)
-    return power_l, power, power_u
+    
+    return {'lower': power_l, 'power': power, 'upper': power_u}
 
 
 
@@ -260,7 +262,8 @@ def special(rank_C, rank_U, rank_X, total_N, eval_HINVE, alphascalar,
     power_l, power_u, fmethod_l, fmethod_u, noncen_l, noncen_u = glmmpcl(alphascalar, df1, total_N, df2, cl_type, n_est,
                                                                          rank_est,
                                                                          alpha_cl, alpha_cu, tolerance, power, omega)
-    return power_l, power, power_u
+    
+    return {'lower': power_l, 'power': power, 'upper': power_u}
 
 
 def multi_power(alphascalar, df1, df2, omega):
@@ -273,4 +276,5 @@ def multi_power(alphascalar, df1, df2, omega):
         power = alphascalar
     else:
         power = 1 - prob
+    power = float(power)
     return power, fmethod
