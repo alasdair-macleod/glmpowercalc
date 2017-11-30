@@ -224,8 +224,7 @@ def ggexeps(sigma_star, rank_U, total_N, rank_X, UnirepHuynhFeldt):
 def lastuni(rank_C, rank_U, total_N, rank_X,
             error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
             n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cl_type, alpha_cl, alpha_cu, tolerance, round,
-            exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+            cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
             unirepmethod):
     """
     Univariate STEP 3
@@ -249,7 +248,6 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
     :param alpha_cl: (scalar) lower tail probability for power C.L.
     :param alpha_cu: (scalar) upper tail probability for power C.L.
     :param tolerance: (scalar) value not tolerated, numeric zero, used for checking singularity.
-    :param round: (scalar) # of places to round power calculations
     :param exeps: expected value epsilon estimator
     :param eps: epsilon calculated from U`*SIGMA*U
     :param alpha_scalar: Type I error rates
@@ -404,7 +402,6 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         df1 = float("nan")
         df2 = float("nan")
         fmethod = float("nan")
-        accuracy = 10 ** (-round - 1)
         qweight = np.concatenate((sigmastareval, -sigmastareval * fcrit * undf1 / undf2))
         qnuvec = np.concatenate((np.full((rank_U, 1), rank_C), np.full((rank_U, 1), total_N - rank_X)), axis=0)
         dgover = np.diag(1 / np.sqrt(np.squeeze(np.asarray(sigmastareval))))
