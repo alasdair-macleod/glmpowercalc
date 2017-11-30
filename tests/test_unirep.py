@@ -104,8 +104,7 @@ class TestUnirep(TestCase):
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
                                 error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
                                 n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, round,
-                                exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
                                 unirepmethod)
         self.assertAlmostEqual(actual, expected, places=5)
 
@@ -152,8 +151,7 @@ class TestUnirep(TestCase):
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
                                 error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
                                 n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, round,
-                                exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
                                 unirepmethod)
         self.assertAlmostEqual(actual, expected, places=6)
 
@@ -200,8 +198,7 @@ class TestUnirep(TestCase):
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
                                 error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
                                 n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, round,
-                                exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
                                 unirepmethod)
         self.assertAlmostEqual(actual, expected, places=5)
 
@@ -248,8 +245,7 @@ class TestUnirep(TestCase):
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
                                 error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
                                 n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, round,
-                                exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
+                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
                                 unirepmethod)
         self.assertAlmostEqual(actual[0], expected[0], places=5)
         self.assertAlmostEqual(actual[1], expected[1], places=5)
