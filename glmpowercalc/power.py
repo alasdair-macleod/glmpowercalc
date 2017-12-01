@@ -3,7 +3,6 @@ import warnings
 
 from glmpowercalc import unirep, multirep
 from glmpowercalc.constants import Constants
-from glmpowercalc.input import CalcMethod, Option, CL, IP
 from glmpowercalc.ranksymm import ranksymm
 
 
@@ -21,33 +20,30 @@ class PowerReturn:
         self.box_power = box_power
 
 
-def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_scalar, sigma_scalar, rho_scalar, alpha,
-          tolerance, CalcMethod, Option, CL, IP):
-
+def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, Scalar, CalcMethod, Option, CL, IP):
     if CL.cl_type == Constants.CLTYPE_NOT_DESIRED and Option.opt_noncencl:
         raise Exception("ERROR 83: NONCENCL is not a valid option when CL not desired.")
 
     # Check repn
-    if rep_n <= tolerance:
+    if Scalar.rep_n <= Scalar.tolerance:
         raise Exception('ERROR 10: All REPN values must be > TOLERANCE > 0.')
 
-    # TODO need to verify the logic
-    if Option.opt_fracrepn and rep_n % 1 != 1:
+    if Option.opt_fracrepn and Scalar.rep_n % 1 != 1:
         raise Exception('ERROR 11: All REPN values must be positive integers. To allow fractional REPN values, '
                         'specify opt_fracrepn')
 
     # Check sigscal
-    if sigma_scalar <= tolerance:
+    if Scalar.sigma_scalar <= Scalar.tolerance:
         raise Exception('ERROR 12: All SIGSCAL values must be > TOLERANCE > 0.')
 
     # Check alpha
-    if alpha <= tolerance or alpha >= 1:
+    if Scalar.alpha <= Scalar.tolerance or Scalar.alpha >= 1:
         raise Exception('ERROR 13: All ALPHA values must be > TOLERANCE > 0 and < 1.')
 
     # Check tolerance
-    if tolerance <= 0:
+    if Scalar.tolerance <= 0:
         raise Exception('ERROR 17: User specified TOLERANCE <= zero.')
-    if tolerance >= 0.01:
+    if Scalar.tolerance >= 0.01:
         raise Exception('WARNING 6: User specified TOLERANCE >= 0.01. This is the value assumed to be numeric '
                         'zero and affects many calculations. Please check that this value is correct.')
 
@@ -74,7 +70,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
     num_response = np.shape(beta)[1]  # P
 
     # Check on size and conformity of matrices
-    if np.diag(sigma).min() < -tolerance:
+    if np.diag(sigma).min() < -Scalar.tolerance:
         raise Exception('At least one variance < -tolerance. Check SIGMA')
     if np.shape(u_matrix)[0] != np.shape(sigma)[0]:
         raise Exception('ERROR 37: The number of rows of U is not equal to number of rows of SIGMA.')
@@ -99,19 +95,19 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                     np.shape(theta_zero)[1] != num_col_u:
         raise Exception('ERROR 43: The THETA0 matrix does not conform to CBETAU.')
 
-    if sigma_scalar <= tolerance:
+    if Scalar.sigma_scalar <= Scalar.tolerance:
         raise Exception('ERROR 44: Smallest value in SIGSCAL <= TOLERANCE (too small)')
 
     xpx = (essencex.T * essencex + (essencex.T * essencex).T) / 2
     cpc = (c_matrix * c_matrix.T + (c_matrix * c_matrix.T).T) / 2
     upu = (u_matrix.T * u_matrix + (u_matrix.T * u_matrix).T) / 2
-    rank_x = ranksymm(xpx, tolerance)  # R
-    rank_c = ranksymm(cpc, tolerance)
-    rank_u = ranksymm(upu, tolerance)
+    rank_x = ranksymm(xpx, Scalar.tolerance)  # R
+    rank_c = ranksymm(cpc, Scalar.tolerance)
+    rank_u = ranksymm(upu, Scalar.tolerance)
     min_rank_c_u = min(rank_c, rank_u)  # S
     xpxginv = np.linalg.pinv(xpx)  # (Moore-Penrose) pseudo-inverse, the same method in IML--GINV()
     m_matrix = c_matrix * xpxginv * c_matrix.T
-    rank_m = ranksymm(m_matrix, tolerance)
+    rank_m = ranksymm(m_matrix, Scalar.tolerance)
 
     sigma_diag_inv = np.linalg.inv(np.diag(np.sqrt(np.diag(sigma))))
     rho = sigma_diag_inv * sigma * sigma_diag_inv
@@ -138,7 +134,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
         raise Exception('ERROR 47: U must be full rank to ensure testability of CBETAU = THETA0.')
 
     # C = C * XPXGINV * XPX
-    if max(abs(c_matrix - c_matrix * xpxginv * xpx)) > tolerance:
+    if max(abs(c_matrix - c_matrix * xpxginv * xpx)) > Scalar.tolerance:
         raise Exception('ERROR 48: A requirement for estimability is that C = C * GINV(X`X) * X`X.  Your choices '
                         'of C and ESSENCEX do not provide this.  We suggest using full rank coding for ESSENCEX.')
 
@@ -164,9 +160,9 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
             upu = upu / upu[0, 0]
         udif = abs(upu - np.identity(np.shape(u_matrix)[1]))
 
-        if (max(udif) > np.sqrt(tolerance)) or \
+        if (max(udif) > np.sqrt(Scalar.tolerance)) or \
                 (np.shape(u_matrix)[1] > 1 and max(
-                        u_matrix.T * np.ones((np.shape(beta)[1], 1))) > np.sqrt(tolerance)):
+                        u_matrix.T * np.ones((np.shape(beta)[1], 1))) > np.sqrt(Scalar.tolerance)):
             if not Option.opt_orthu and not Option.opt_uniforce:
                 raise Exception('ERROR 50: For univariate repeated measures, U must be proportional to an '
                                 'orthonormal matrix [U`U = cI] and orthogonal to a Px1 column of 1 [U`1 = 0]. The '
@@ -179,7 +175,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                 # TODO QR decomposition, Gram-Schmidt orthonormal factorization difference
                 u_orth, t_matrix = np.linalg.qr(u_matrix)
                 if (np.shape(u_matrix)[1] > 1 and max(
-                            u_orth.T * np.ones((np.shape(beta)[1], 1))) > np.sqrt(tolerance)):
+                            u_orth.T * np.ones((np.shape(beta)[1], 1))) > np.sqrt(Scalar.tolerance)):
                     raise Exception('ERROR 51: You have specified option ORTHU so that the program will provide a '
                                     'U that is proportional to to an orthonormal matrix and orthogonal to a Px1 '
                                     'column of 1. The original U given cannot be made to be orthogonal to a Px1 '
@@ -204,7 +200,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
     if Option.opt_calc_collapse:
         if min_rank_c_u > 1:
             Option.opt_calc_collapse = False
-            raise Exception("WARNING 1: Rank(C*BETA*U) > 1, so COLLAPSE option ignored.")
+            warnings.warn("WARNING 1: Rank(C*BETA*U) > 1, so COLLAPSE option ignored.")
         if num_col_u == 1:
             Option.opt_calc_hlt = 0
             Option.opt_calc_pbt = 0
@@ -214,7 +210,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
             Option.opt_calc_cm = 0
             Option.opt_calc_gg = 0
             Option.opt_calc_box = 0
-            raise Exception(
+            warnings.warn(
                 "WARNING 2: B = 1, so that all tests coincide (univariate case). "
                 "Since collapse option is on, power is given as one value with the heading POWER. "
                 "To print powers with a heading for  each test, specify collapse option off.")
@@ -242,9 +238,9 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
     #
     # prepare for power calculation
     # 1.sigma
-    sigma_scaled = sigma * sigma_scalar
+    sigma_scaled = sigma * Scalar.sigma_scalar
     variance_scaled = np.diag(sigma_scaled)
-    if variance_scaled.min() <= tolerance:
+    if variance_scaled.min() <= Scalar.tolerance:
         raise Exception('ERROR 52: The covariance matrix formed with SIGSCAL element has a variance <= '
                         'TOLERANCE (too small).')
 
@@ -253,7 +249,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
         np.ones((np.shape(beta)[1], 1)) / stdev_scaled)
 
     # 2.rhos
-    rho_junk = rho_scaled * rho_scalar
+    rho_junk = rho_scaled * Scalar.rho_scalar
     rho_offdiag = rho_junk - np.diag(np.diag(rho_junk))
     rho_offdiag_symm = (rho_offdiag + rho_offdiag.T) / 2
 
@@ -266,32 +262,32 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
     sigma_star = u_orth.T * (np.diag(stdev_scaled) * (rho_offdiag_symm + np.identity(np.shape(beta)[1]))
                              * np.diag(stdev_scaled)) * u_orth
     eigval_sigma_star, eigvec_sigma_star = np.linalg.eig(sigma_star)
-    rank_sigma_star = ranksymm(sigma_star, tolerance)
+    rank_sigma_star = ranksymm(sigma_star, Scalar.tolerance)
 
     # 3.Beta
-    beta_scaled = beta * beta_scalar
+    beta_scaled = beta * Scalar.beta_scalar
     theta = c_matrix * beta_scaled * u_orth
     essh = (theta - theta_zero).T * np.linalg.solve(m_matrix, np.identity(np.shape(m_matrix)[0])) \
            * (theta - theta_zero)
 
     # 4.N
-    total_sample_size = rep_n * np.shape(essencex)[0]
+    total_sample_size = Scalar.rep_n * np.shape(essencex)[0]
     if np.int(total_sample_size) != total_sample_size:
         warnings.warn('WARNING 14: You have specified a design with non-integer N. In doing so, you are '
                       'responsible for correct interpretation of the results.')
 
     error_sum_square = sigma_star * (total_sample_size - rank_x)  # E
-    hypo_sum_square = rep_n * essh  # H
+    hypo_sum_square = Scalar.rep_n * essh  # H
 
     if num_col_u > total_sample_size - rank_x and \
             (total_sample_size - rank_x > 0 and
                  (Option.opt_calc_collapse |
-                  Option.opt_calc_hlt |
-                  Option.opt_calc_pbt |
-                  Option.opt_calc_wlk |
-                  Option.opt_calc_un |
-                  Option.opt_calc_gg |
-                  Option.opt_calc_box)):
+                      Option.opt_calc_hlt |
+                      Option.opt_calc_pbt |
+                      Option.opt_calc_wlk |
+                      Option.opt_calc_un |
+                      Option.opt_calc_gg |
+                      Option.opt_calc_box)):
         raise Exception('ERROR 97: Tests GG, UN, Box, HLT, PBT, and WLK '
                         'have undesirable properties when applied to high '
                         'dimension low sample size data, thus are disallowed '
@@ -319,7 +315,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
             hei_orth = inverse_error_sum * error_sum_square * inverse_error_sum.T
             hei_orth_symm = (hei_orth + hei_orth.T) / 2
             eval = np.linalg.eigvals(hei_orth_symm)[0:min_rank_c_u]
-            eval = eval * (eval > tolerance)
+            eval = eval * (eval > Scalar.tolerance)
 
             # make vector of squared generalized canonical correlations
             eval_pop = eval * (total_sample_size - rank_x) / total_sample_size
@@ -335,13 +331,8 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                          rank_X=rank_x,
                                          total_N=total_sample_size,
                                          eval_HINVE=eval,
-                                         alphascalar=alpha,
-                                         cl_type=CL.cl_type,
-                                         n_est=CL.n_est,
-                                         rank_est=CL.rank_est,
-                                         alpha_cl=CL.alpha_cl,
-                                         alpha_cu=CL.alpha_cu,
-                                         tolerance=tolerance)
+                                         CL=CL,
+                                         Scalar=Scalar)
     else:
         special_power = None
 
@@ -351,14 +342,9 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                  rank_X=rank_x,
                                  total_N=total_sample_size,
                                  eval_HINVE=eval,
-                                 alphascalar=alpha,
                                  MultiHLT=CalcMethod.MultiHLT,
-                                 cl_type=CL.cl_type,
-                                 n_est=CL.n_est,
-                                 rank_est=CL.rank_est,
-                                 alpha_cl=CL.alpha_cl,
-                                 alpha_cu=CL.alpha_cu,
-                                 tolerance=tolerance)
+                                 CL=CL,
+                                 Scalar=Scalar)
     else:
         hlt_power = None
 
@@ -368,14 +354,9 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                  rank_X=rank_x,
                                  total_N=total_sample_size,
                                  eval_HINVE=eval,
-                                 alphascalar=alpha,
                                  MultiPBT=CalcMethod.MultiPBT,
-                                 cl_type=CL.cl_type,
-                                 n_est=CL.n_est,
-                                 rank_est=CL.rank_est,
-                                 alpha_cl=CL.alpha_cl,
-                                 alpha_cu=CL.alpha_cu,
-                                 tolerance=tolerance)
+                                 CL=CL,
+                                 Scalar=Scalar)
     else:
         pbt_power = None
 
@@ -385,14 +366,9 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                  rank_X=rank_x,
                                  total_N=total_sample_size,
                                  eval_HINVE=eval,
-                                 alphascalar=alpha,
                                  MultiWLK=CalcMethod.MultiWLK,
-                                 cl_type=CL.cl_type,
-                                 n_est=CL.n_est,
-                                 rank_est=CL.rank_est,
-                                 alpha_cl=CL.alpha_cl,
-                                 alpha_cu=CL.alpha_cu,
-                                 tolerance=tolerance)
+                                 CL=CL,
+                                 Scalar=Scalar)
     else:
         wlk_power = None
 
@@ -407,27 +383,15 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                   rank_X=rank_x,
                                   error_sum_square=error_sum_square,
                                   hypo_sum_square=hypo_sum_square,
-                                  sig_type=CL.sigma_type,
-                                  ip_plan=IP.ip_plan,
-                                  rank_ip=IP.rank_ip,
-                                  n_est=CL.n_est,
-                                  rank_est=CL.rank_est,
-                                  n_ip=IP.n_ip,
                                   sigmastareval=eigval_sigma_star,
                                   sigmastarevec=eigvec_sigma_star,
-                                  cl_type=CL.cl_type,
-                                  alpha_cl=CL.alpha_cl,
-                                  alpha_cu=CL.alpha_cu,
-                                  tolerance=tolerance,
                                   exeps=1,
                                   eps=eps,
-                                  alpha_scalar=alpha,
-                                  opt_calc_un=Option.opt_calc_un,
-                                  opt_calc_gg=Option.opt_calc_gg,
-                                  opt_calc_box=Option.opt_calc_box,
-                                  opt_calc_hf=Option.opt_calc_hf,
-                                  opt_calc_cm=Option.opt_calc_cm,
-                                  unirepmethod=CalcMethod.UnirepUncorrected)
+                                  unirepmethod=CalcMethod.UnirepUncorrected,
+                                  Scalar=Scalar,
+                                  Option=Option,
+                                  CL=CL,
+                                  IP=IP)
     else:
         un_power = None
 
@@ -445,27 +409,15 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                   rank_X=rank_x,
                                   error_sum_square=error_sum_square,
                                   hypo_sum_square=hypo_sum_square,
-                                  sig_type=CL.sigma_type,
-                                  ip_plan=IP.ip_plan,
-                                  rank_ip=IP.rank_ip,
-                                  n_est=CL.n_est,
-                                  rank_est=CL.rank_est,
-                                  n_ip=IP.n_ip,
                                   sigmastareval=eigval_sigma_star,
                                   sigmastarevec=eigvec_sigma_star,
-                                  cl_type=CL.cl_type,
-                                  alpha_cl=CL.alpha_cl,
-                                  alpha_cu=CL.alpha_cu,
-                                  tolerance=tolerance,
                                   exeps=exeps,
                                   eps=eps,
-                                  alpha_scalar=alpha,
-                                  opt_calc_un=Option.opt_calc_un,
-                                  opt_calc_gg=Option.opt_calc_gg,
-                                  opt_calc_box=Option.opt_calc_box,
-                                  opt_calc_hf=Option.opt_calc_hf,
-                                  opt_calc_cm=Option.opt_calc_cm,
-                                  unirepmethod=CalcMethod.UnirepHuynhFeldt)
+                                  unirepmethod=CalcMethod.UnirepHuynhFeldt,
+                                  Scalar=Scalar,
+                                  Option=Option,
+                                  CL=CL,
+                                  IP=IP)
     else:
         hf_power = None
 
@@ -480,27 +432,15 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                   rank_X=rank_x,
                                   error_sum_square=error_sum_square,
                                   hypo_sum_square=hypo_sum_square,
-                                  sig_type=CL.sigma_type,
-                                  ip_plan=IP.ip_plan,
-                                  rank_ip=IP.rank_ip,
-                                  n_est=CL.n_est,
-                                  rank_est=CL.rank_est,
-                                  n_ip=IP.n_ip,
                                   sigmastareval=eigval_sigma_star,
                                   sigmastarevec=eigvec_sigma_star,
-                                  cl_type=CL.cl_type,
-                                  alpha_cl=CL.alpha_cl,
-                                  alpha_cu=CL.alpha_cu,
-                                  tolerance=tolerance,
                                   exeps=exeps,
                                   eps=eps,
-                                  alpha_scalar=alpha,
-                                  opt_calc_un=Option.opt_calc_un,
-                                  opt_calc_gg=Option.opt_calc_gg,
-                                  opt_calc_box=Option.opt_calc_box,
-                                  opt_calc_hf=Option.opt_calc_hf,
-                                  opt_calc_cm=Option.opt_calc_cm,
-                                  unirepmethod=CalcMethod.UnirepHuynhFeldtChiMuller)
+                                  unirepmethod=CalcMethod.UnirepHuynhFeldtChiMuller,
+                                  Scalar=Scalar,
+                                  Option=Option,
+                                  CL=CL,
+                                  IP=IP)
     else:
         cm_power = None
 
@@ -515,27 +455,15 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                   rank_X=rank_x,
                                   error_sum_square=error_sum_square,
                                   hypo_sum_square=hypo_sum_square,
-                                  sig_type=CL.sigma_type,
-                                  ip_plan=IP.ip_plan,
-                                  rank_ip=IP.rank_ip,
-                                  n_est=CL.n_est,
-                                  rank_est=CL.rank_est,
-                                  n_ip=IP.n_ip,
                                   sigmastareval=eigval_sigma_star,
                                   sigmastarevec=eigvec_sigma_star,
-                                  cl_type=CL.cl_type,
-                                  alpha_cl=CL.alpha_cl,
-                                  alpha_cu=CL.alpha_cu,
-                                  tolerance=tolerance,
                                   exeps=exeps,
                                   eps=eps,
-                                  alpha_scalar=alpha,
-                                  opt_calc_un=Option.opt_calc_un,
-                                  opt_calc_gg=Option.opt_calc_gg,
-                                  opt_calc_box=Option.opt_calc_box,
-                                  opt_calc_hf=Option.opt_calc_hf,
-                                  opt_calc_cm=Option.opt_calc_cm,
-                                  unirepmethod=CalcMethod.UnirepGeisserGreenhouse)
+                                  unirepmethod=CalcMethod.UnirepGeisserGreenhouse,
+                                  Scalar=Scalar,
+                                  Option=Option,
+                                  CL=CL,
+                                  IP=IP)
     else:
         gg_power = None
 
@@ -547,31 +475,17 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_sca
                                    rank_X=rank_x,
                                    error_sum_square=error_sum_square,
                                    hypo_sum_square=hypo_sum_square,
-                                   sig_type=CL.sigma_type,
-                                   ip_plan=IP.ip_plan,
-                                   rank_ip=IP.rank_ip,
-                                   n_est=CL.n_est,
-                                   rank_est=CL.rank_est,
-                                   n_ip=IP.n_ip,
                                    sigmastareval=eigval_sigma_star,
                                    sigmastarevec=eigvec_sigma_star,
-                                   cl_type=CL.cl_type,
-                                   alpha_cl=CL.alpha_cl,
-                                   alpha_cu=CL.alpha_cu,
-                                   tolerance=tolerance,
                                    exeps=exeps,
                                    eps=eps,
-                                   alpha_scalar=alpha,
-                                   opt_calc_un=Option.opt_calc_un,
-                                   opt_calc_gg=Option.opt_calc_gg,
-                                   opt_calc_box=Option.opt_calc_box,
-                                   opt_calc_hf=Option.opt_calc_hf,
-                                   opt_calc_cm=Option.opt_calc_cm,
-                                   unirepmethod=CalcMethod.UnirepBox)
+                                   unirepmethod=CalcMethod.UnirepBox,
+                                   Scalar=Scalar,
+                                   Option=Option,
+                                   CL=CL,
+                                   IP=IP)
     else:
         box_power = None
 
     return PowerReturn(special_power, hlt_power, pbt_power, wlk_power, un_power, hf_power, cm_power, gg_power,
                        box_power)
-
-

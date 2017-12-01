@@ -2,7 +2,7 @@ from unittest import TestCase
 import numpy as np
 from glmpowercalc import unirep
 from glmpowercalc.constants import Constants
-
+from glmpowercalc.input import CalcMethod, Option, CL, IP
 
 class TestUnirep(TestCase):
     def test_Firstuni1(self):
@@ -64,24 +64,24 @@ class TestUnirep(TestCase):
     def test_lastuni1(self):
         """ case 1: should return expected value """
         expected = 0.9634686
-        opt_calc_un = False
-        opt_calc_gg = False
-        opt_calc_box = False
-        opt_calc_hf = True
-        opt_calc_cm = False
+        Option = Option(opt_calc_un=False,
+                        opt_calc_gg=False,
+                        opt_calc_box=False,
+                        opt_calc_hf=True,
+                        opt_calc_cm=False)
         unirepmethod = Constants.UCDF_MULLER2004_APPROXIMATION
         rank_C = 1
         rank_U = 4
         rank_X = 1
         total_N = 20
         hypo_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
-                                        [0.625, 1.25, -1.25, 0.625],
-                                        [-0.625, -1.25, 1.25, -0.625],
-                                        [0.3125, 0.625, -0.625, 0.3125]])
+                                     [0.625, 1.25, -1.25, 0.625],
+                                     [-0.625, -1.25, 1.25, -0.625],
+                                     [0.3125, 0.625, -0.625, 0.3125]])
         error_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
-                                        [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
-                                        [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
-                                        [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
+                                      [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
+                                      [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
+                                      [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
         sig_type = False
         ip_plan = False
         rank_ip = 1
@@ -90,9 +90,9 @@ class TestUnirep(TestCase):
         rank_est = float('nan')
         sigmastareval = np.matrix([[0.23555], [0.17123], [0.05561], [0.04721]])
         sigmastarevec = np.matrix([[-1, 4.51e-17, -2.01e-16, -4.61e-18],
-                                    [2.776e-17, 1, -3.33e-16, -2.39e-16],
-                                    [-2.74e-16, 2.632e-16, 1, 2.001e-16],
-                                    [-4.61e-18, 2.387e-16, -2e-16, 1]])
+                                   [2.776e-17, 1, -3.33e-16, -2.39e-16],
+                                   [-2.74e-16, 2.632e-16, 1, 2.001e-16],
+                                   [-4.61e-18, 2.387e-16, -2e-16, 1]])
         cl_type = Constants.CLTYPE_NOT_DESIRED
         alpha_cl = 0.025
         alpha_cu = 0.025
@@ -102,10 +102,8 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
-                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
-                                unirepmethod)
+                                error_sum_square, hypo_sum_square, n_ip, sigmastarevec,
+                                exeps, eps, unirepmethod)
         self.assertAlmostEqual(actual, expected, places=5)
 
     def test_lastuni2(self):
@@ -122,13 +120,13 @@ class TestUnirep(TestCase):
         rank_X = 1
         total_N = 20
         hypo_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
-                                        [0.625, 1.25, -1.25, 0.625],
-                                        [-0.625, -1.25, 1.25, -0.625],
-                                        [0.3125, 0.625, -0.625, 0.3125]])
+                                     [0.625, 1.25, -1.25, 0.625],
+                                     [-0.625, -1.25, 1.25, -0.625],
+                                     [0.3125, 0.625, -0.625, 0.3125]])
         error_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
-                                        [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
-                                        [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
-                                        [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
+                                      [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
+                                      [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
+                                      [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
         sig_type = True
         ip_plan = False
         rank_ip = 1
@@ -137,9 +135,9 @@ class TestUnirep(TestCase):
         rank_est = 1
         sigmastareval = np.matrix([[0.23555], [0.17123], [0.05561], [0.04721]])
         sigmastarevec = np.matrix([[-1, 4.51e-17, -2.01e-16, -4.61e-18],
-                                    [2.776e-17, 1, -3.33e-16, -2.39e-16],
-                                    [-2.74e-16, 2.632e-16, 1, 2.001e-16],
-                                    [-4.61e-18, 2.387e-16, -2e-16, 1]])
+                                   [2.776e-17, 1, -3.33e-16, -2.39e-16],
+                                   [-2.74e-16, 2.632e-16, 1, 2.001e-16],
+                                   [-4.61e-18, 2.387e-16, -2e-16, 1]])
         cl_type = Constants.CLTYPE_NOT_DESIRED
         alpha_cl = 0.025
         alpha_cu = 0.025
@@ -149,10 +147,8 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
-                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
-                                unirepmethod)
+                                error_sum_square, hypo_sum_square, n_ip, sigmastarevec,
+                                exeps, eps, unirepmethod)
         self.assertAlmostEqual(actual, expected, places=6)
 
     def test_lastuni3(self):
@@ -169,13 +165,13 @@ class TestUnirep(TestCase):
         rank_X = 1
         total_N = 20
         hypo_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
-                                        [0.625, 1.25, -1.25, 0.625],
-                                        [-0.625, -1.25, 1.25, -0.625],
-                                        [0.3125, 0.625, -0.625, 0.3125]])
+                                     [0.625, 1.25, -1.25, 0.625],
+                                     [-0.625, -1.25, 1.25, -0.625],
+                                     [0.3125, 0.625, -0.625, 0.3125]])
         error_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
-                                        [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
-                                        [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
-                                        [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
+                                      [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
+                                      [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
+                                      [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
         sig_type = False
         ip_plan = True
         rank_ip = 1
@@ -184,9 +180,9 @@ class TestUnirep(TestCase):
         rank_est = float('nan')
         sigmastareval = np.matrix([[0.23555], [0.17123], [0.05561], [0.04721]])
         sigmastarevec = np.matrix([[-1, 4.51e-17, -2.01e-16, -4.61e-18],
-                                    [2.776e-17, 1, -3.33e-16, -2.39e-16],
-                                    [-2.74e-16, 2.632e-16, 1, 2.001e-16],
-                                    [-4.61e-18, 2.387e-16, -2e-16, 1]])
+                                   [2.776e-17, 1, -3.33e-16, -2.39e-16],
+                                   [-2.74e-16, 2.632e-16, 1, 2.001e-16],
+                                   [-4.61e-18, 2.387e-16, -2e-16, 1]])
         cl_type = Constants.CLTYPE_NOT_DESIRED
         alpha_cl = 0.025
         alpha_cu = 0.025
@@ -196,10 +192,8 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
-                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
-                                unirepmethod)
+                                error_sum_square, hypo_sum_square, n_ip, sigmastarevec,
+                                exeps, eps, unirepmethod)
         self.assertAlmostEqual(actual, expected, places=5)
 
     def test_lastuni4(self):
@@ -216,13 +210,13 @@ class TestUnirep(TestCase):
         rank_X = 1
         total_N = 20
         hypo_sum_square = np.matrix([[0.3125, 0.625, -0.625, 0.3125],
-                                        [0.625, 1.25, -1.25, 0.625],
-                                        [-0.625, -1.25, 1.25, -0.625],
-                                        [0.3125, 0.625, -0.625, 0.3125]])
+                                     [0.625, 1.25, -1.25, 0.625],
+                                     [-0.625, -1.25, 1.25, -0.625],
+                                     [0.3125, 0.625, -0.625, 0.3125]])
         error_sum_square = np.matrix([[4.47545, -3.3e-17, 1.055e-15, 1.648e-17],
-                                        [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
-                                        [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
-                                        [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
+                                      [-3.3e-17, 3.25337, -8.24e-18, 5.624e-16],
+                                      [1.055e-15, -8.24e-18, 1.05659, -3.19e-17],
+                                      [1.648e-17, 5.624e-16, -3.19e-17, 0.89699]])
         sig_type = True
         ip_plan = False
         rank_ip = 1
@@ -231,9 +225,9 @@ class TestUnirep(TestCase):
         rank_est = 1
         sigmastareval = np.matrix([[0.23555], [0.17123], [0.05561], [0.04721]])
         sigmastarevec = np.matrix([[-1, 4.51e-17, -2.01e-16, -4.61e-18],
-                                    [2.776e-17, 1, -3.33e-16, -2.39e-16],
-                                    [-2.74e-16, 2.632e-16, 1, 2.001e-16],
-                                    [-4.61e-18, 2.387e-16, -2e-16, 1]])
+                                   [2.776e-17, 1, -3.33e-16, -2.39e-16],
+                                   [-2.74e-16, 2.632e-16, 1, 2.001e-16],
+                                   [-4.61e-18, 2.387e-16, -2e-16, 1]])
         cl_type = Constants.CLTYPE_DESIRED_KNOWN
         alpha_cl = 0.025
         alpha_cu = 0.025
@@ -243,10 +237,8 @@ class TestUnirep(TestCase):
         eps = 0.7203684
         alpha_scalar = 0.04
         actual = unirep.lastuni(rank_C, rank_U, total_N, rank_X,
-                                error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-                                n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-                                cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
-                                unirepmethod)
+                                error_sum_square, hypo_sum_square, n_ip, sigmastarevec,
+                                exeps, eps, unirepmethod)
         self.assertAlmostEqual(actual[0], expected[0], places=5)
         self.assertAlmostEqual(actual[1], expected[1], places=5)
         self.assertAlmostEqual(actual[2], expected[2], places=5)

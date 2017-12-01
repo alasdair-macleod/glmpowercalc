@@ -3,7 +3,7 @@ import numpy as np
 
 from glmpowercalc.constants import Constants
 from glmpowercalc.power import power
-from glmpowercalc.input import CalcMethod, Option, CL, IP
+from glmpowercalc.input import Scalar, CalcMethod, Option, CL, IP
 
 class TestPower(TestCase):
     def test_Power(self):
@@ -14,18 +14,8 @@ class TestPower(TestCase):
         essencex = np.matrix([[1]])
         u_matrix = np.matrix(np.identity(np.shape(beta)[1]))
         theta_zero = np.zeros((np.shape(c_matrix)[0], np.shape(u_matrix)[1]))
-        rep_n = 10
-        beta_scalar = 0.5
-        sigma_scalar = 1
-        rho_scalar = 1
-        alpha = 0.05
-        tolerance = 1e-12
-        CalcMethod = CalcMethod()
-        Option = Option()
-        CL = CL()
-        IP = IP()
-        actual = power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, rep_n, beta_scalar, sigma_scalar, rho_scalar, alpha,
-          tolerance, CalcMethod, Option, CL, IP)
+
+        actual = power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, Scalar(), CalcMethod(), Option(), CL(), IP())
         actual_special = actual.special_power
         actual_hlt = actual.hlt_power
         actual_pbt = actual.pbt_power

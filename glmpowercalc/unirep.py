@@ -222,10 +222,8 @@ def ggexeps(sigma_star, rank_U, total_N, rank_X, UnirepHuynhFeldt):
 
 
 def lastuni(rank_C, rank_U, total_N, rank_X,
-            error_sum_square, hypo_sum_square, sig_type, ip_plan, rank_ip,
-            n_est, rank_est, n_ip, sigmastareval, sigmastarevec,
-            cl_type, alpha_cl, alpha_cu, tolerance, exeps, eps, alpha_scalar, opt_calc_un, opt_calc_gg, opt_calc_box, opt_calc_hf, opt_calc_cm,
-            unirepmethod):
+            error_sum_square, hypo_sum_square, sigmastareval, sigmastarevec,
+            exeps, eps, unirepmethod, Scalar, Option, CL, IP):
     """
     Univariate STEP 3
     This module performs the final step for univariate repeated measures power calculations.
@@ -236,27 +234,16 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
     :param rank_X: rank of X
     :param error_sum_square: error sum of squares
     :param hypo_sum_square: hypothesis sum of squares
-    :param sig_type: (scalar) choice of whether SIGMA is known or estimated
-    :param ip_plan: (scalar) flag to compute power in planning an internal pilot design
-    :param rank_ip: (scalar) rank of the design matrix used in the future study (required if IP_PLAN=1)
-    :param n_ip: (scalar) # of observations planned for the internal pilot of the future study (required if IP_PLAN=1)
-    :param rank_est: (scalar) design matrix rank in analysis which yielded BETA and SIGMA estimates (required if CLTYPE>=1)
-    :param n_est: (scalar) # of observations in analysis which yielded BETA and SIGMA estimates (required if CLTYPE>=1 or SIGTYPE=1)
     :param sigmastareval: eigenvalues  of SIGMASTAR=U`*SIGMA*U
     :param sigmastarevec: eigenvectors of SIGMASTAR=U`*SIGMA*U
-    :param cl_type: (scalar) choice of whether confidence limits produced
-    :param alpha_cl: (scalar) lower tail probability for power C.L.
-    :param alpha_cu: (scalar) upper tail probability for power C.L.
-    :param tolerance: (scalar) value not tolerated, numeric zero, used for checking singularity.
     :param exeps: expected value epsilon estimator
     :param eps: epsilon calculated from U`*SIGMA*U
-    :param alpha_scalar: Type I error rates
     :return:
     """
 
     nue = total_N - rank_X
 
-    if rank_U > nue and (opt_calc_un or opt_calc_gg or opt_calc_box):
+    if rank_U > nue and (Option.opt_calc_un or Option.opt_calc_gg or Option.opt_calc_box):
         warnings.warn('PowerWarn23: Power is missing, because Uncorrected, Geisser-Greenhouse and Box tests are '
                       'poorly behaved (super low power and test size) when B > N-R, i.e., HDLSS.')
         raise Exception("#TODO what kind of exception")
@@ -278,7 +265,7 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
 
     # Case 1
     # Enter loop to compute E1-E5 based on known SIGMA
-    if (not sig_type) and (not ip_plan):
+    if (not CL.sigma_type) and (not IP.ip_plan):
         epsn_num = q3 + q1 * q2 * 2 / rank_C
         epsn_den = q4 + q5 * 2 / rank_C
         epsn = epsn_num / (rank_U * epsn_den)
@@ -291,8 +278,8 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
 
     # Case 2
     # Enter loop to compute E1-E5 based on estimated SIGMA
-    if sig_type and (not ip_plan):
-        nu_est = n_est - rank_est
+    if CL.sigma_type and (not IP.ip_plan):
+        nu_est = CL.n_est - CL.rank_est
         if nu_est <= 1:
             raise Exception("ERROR 81: Too few estimation df in LASTUNI. df = N_EST - RANK_EST <= 1.")
 
@@ -317,22 +304,22 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         # Set E_1_2 for all tests
 
         # for UN or Box critical values
-        if opt_calc_un or opt_calc_box:
+        if Option.opt_calc_un or Option.opt_calc_box:
             e_1_2 = epsda
 
         # for HF crit val
-        if opt_calc_hf:
+        if Option.opt_calc_hf:
             if rank_U <= nue:
                 e_1_2 = epstilde_r_min
             else:
                 e_1_2 = epsda
 
         # for CM crit val
-        if opt_calc_cm:
+        if Option.opt_calc_cm:
             e_1_2 = epsda
 
         # for GG crit val
-        if opt_calc_gg:
+        if Option.opt_calc_gg:
             e_1_2 = eps
 
         # Set E_3_5 for all tests
@@ -342,7 +329,7 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
             e_3_5 = epsnhat
 
         # Set E_4 for all tests
-        if opt_calc_cm:
+        if Option.opt_calc_cm:
             e_4 = epsda
         else:
             e_4 = eps
@@ -352,12 +339,12 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
 
     # case 3
     # Enter loop to compute E1-E5 when planning IP study
-    if ip_plan and (not sig_type):
-        nu_ip = n_ip - rank_ip
+    if IP.ip_plan and (not CL.sigma_type):
+        nu_ip = IP.n_ip - IP.rank_ip
         e_1_2 = exeps
         e_4 = eps
 
-        if opt_calc_hf or opt_calc_cm or opt_calc_gg:
+        if Option.opt_calc_hf or Option.opt_calc_cm or Option.opt_calc_gg:
             lambdap = np.concatenate((sigmastareval,
                                       np.power(sigmastareval, 2),
                                       np.power(sigmastareval, 3),
@@ -390,10 +377,10 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
 
     # Obtain noncentrality and critical value for power point estimate
     omega = e_3_5 * q2 / lambar
-    if opt_calc_cm and sig_type and (not ip_plan):
+    if Option.opt_calc_cm and CL.sigma_type and (not IP.ip_plan):
         omega = omegaua
 
-    fcrit = finv(1 - alpha_scalar, undf1 * e_1_2, undf2 * e_1_2)
+    fcrit = finv(1 - Scalar.alpha, undf1 * e_1_2, undf2 * e_1_2)
 
     # Compute power point estimate
     # 1. Muller, Edwards & Taylor 2002 CDF exact, Davies' algorithm
@@ -424,7 +411,7 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         df2 = undf2 * e_4
         prob, fmethod = probf(fcrit, df1, df2, omega)
         if fmethod == Constants.FMETHOD_NORMAL_LR and prob == 1:
-            power = alpha_scalar
+            power = Scalar.alpha
         else:
             power = 1 - prob
 
@@ -433,38 +420,38 @@ def lastuni(rank_C, rank_U, total_N, rank_X,
         # change from chi sq to F, and only change:)
         #raise Exception("CLTYPE=2 for UNIREP awaiting implementation")
 
-    if cl_type == Constants.CLTYPE_DESIRED_KNOWN:
+    if CL.cl_type == Constants.CLTYPE_DESIRED_KNOWN:
         if unirepmethod == Constants.UCDF_EXACT_DAVIES or \
                 unirepmethod == Constants.UCDF_EXACT_DAVIES_FAIL:
             raise Exception("ERROR 82: Any use of Exact CDF is incompatible with computation of CL for power.")
 
         # Calculate lower bound for power
-        if alpha_cl <= tolerance:
-            prob_l = 1 - alpha_scalar
+        if CL.alpha_cl <= Scalar.tolerance:
+            prob_l = 1 - Scalar.alpha
             fmethod_l = Constants.FMETHOD_MISSING
             noncen_l = float('nan')
         else:
-            chi_l = chi2.ppf(alpha_cl, cl1df)
+            chi_l = chi2.ppf(CL.alpha_cl, cl1df)
             noncen_l = omega * (chi_l / cl1df)
             prob_l, fmethod_l = probf(fcrit, df1, df2, noncen_l)
 
         if fmethod_l == Constants.FMETHOD_NORMAL_LR and prob_l == 1:
-            power_l = alpha_scalar
+            power_l = Scalar.alpha
         else:
             power_l = 1 - prob_l
 
         # Calculate upper bound for power
-        if alpha_cu <= tolerance:
+        if CL.alpha_cu <= Scalar.tolerance:
             prob_u = 0
             fmethod_u = Constants.FMETHOD_MISSING
             noncen_u = float('nan')
         else:
-            chi_u = chi2.ppf(1 - alpha_cu, cl1df)
+            chi_u = chi2.ppf(1 - CL.alpha_cu, cl1df)
             noncen_u = omega * (chi_u / cl1df)
             prob_u, fmethod_u = probf(fcrit, df1, df2, noncen_u)
 
         if fmethod_u == Constants.FMETHOD_NORMAL_LR and prob_u == 1:
-            power_u = alpha_scalar
+            power_u = Scalar.alpha
         else:
             power_u = 1 - prob_u
 
