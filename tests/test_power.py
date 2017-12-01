@@ -5,6 +5,7 @@ from glmpowercalc.constants import Constants
 from glmpowercalc.power import power
 from glmpowercalc.input import Scalar, CalcMethod, Option, CL, IP
 
+
 class TestPower(TestCase):
     def test_Power(self):
         expected = 0.761158
@@ -15,7 +16,7 @@ class TestPower(TestCase):
         u_matrix = np.matrix(np.identity(np.shape(beta)[1]))
         theta_zero = np.zeros((np.shape(c_matrix)[0], np.shape(u_matrix)[1]))
 
-        actual = power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, Scalar(), CalcMethod(), Option(), CL(), IP())
+        actual = power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, Scalar(rep_n=10), CalcMethod(), Option(), CL(), IP())
         actual_special = actual.special_power
         actual_hlt = actual.hlt_power
         actual_pbt = actual.pbt_power
