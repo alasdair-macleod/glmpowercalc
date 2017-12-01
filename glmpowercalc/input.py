@@ -1,5 +1,13 @@
 from glmpowercalc.constants import Constants
 
+class Scalar:
+    def __init__(self, alpha=0.05, rep_n=1, beta_scalar=1, rho_scalar=1, sigma_scalar=1, tolerance=1e-12):
+        self.alpha = alpha
+        self.rep_n = rep_n
+        self.beta_scalar = beta_scalar
+        self.rho_scalar = rho_scalar
+        self.sigma_scalar = sigma_scalar
+        self.tolerance = tolerance
 
 class CL:
     def __init__(self, cl_desire=False, sigma_type=False, beta_type=False,
