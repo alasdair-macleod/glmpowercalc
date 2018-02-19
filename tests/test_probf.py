@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 
+from glmpowercalc.constants import Constants
 from glmpowercalc.probf import probf, _normal_approximation, _get_zscore, _tiku_approximation, _nonadjusted
 
 
@@ -40,7 +41,7 @@ class TestProbf(TestCase):
     @patch('scipy.stats.norm.cdf')
     def test__normal_approximation_fmethod_three(self, mock):
         """Should calculate prob using norm.cdf for |zcsore| < 6 and give fmethod 3"""
-        expected = (0, 3)
+        expected = (0, Constants.FMETHOD_NORMAL_SM)
         mock.return_value = 0
         actual = _normal_approximation(0)
         assert mock.called
@@ -50,13 +51,13 @@ class TestProbf(TestCase):
     def test__normal_approximation_fmethod_four(self, mock):
         """Should not call norm.cdf for |zcsore| > 6
         and return prob 0 for -ve values or 1 for +ve values"""
-        expected = (0, 4)
+        expected = (0, Constants.FMETHOD_NORMAL_LR)
         mock.return_value = 0
         actual = _normal_approximation(-7)
         assert not mock.called
         assert actual == expected
 
-        expected = (1, 4)
+        expected = (1, Constants.FMETHOD_NORMAL_LR)
         mock.return_value = 0
         actual = _normal_approximation(7)
         assert not mock.called
@@ -106,14 +107,14 @@ class TestProbf(TestCase):
     @patch('scipy.special.ncfdtr')
     def test__nonadjusted(self, mock):
         """Should calculate prob using special.ncfdtr and return fmethod 1"""
-        expected = (0, 1)
+        expected = (0, Constants.FMETHOD_NOAPPROXIMATION)
         mock.return_value = 0
         actual = _nonadjusted(0, 0, 0, 0)
         self.assertEqual(expected, actual)
 
     def test__probf(self):
         """Should have the same prob and fmethod as in IML"""
-        expected = (0.7853726, 1)
+        expected = (0.7853726, Constants.FMETHOD_NOAPPROXIMATION)
         result = probf(1.96, 0.5, 3, 0)
         actual = (round(result[0], 7), result[1])
         self.assertEqual(expected, actual)

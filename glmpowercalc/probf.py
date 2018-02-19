@@ -2,6 +2,8 @@ from scipy import special
 from scipy.stats import norm
 import math
 
+from glmpowercalc.constants import Constants
+
 
 def probf(fcrit, df1, df2, noncen):
     """PROBF calculates Pr(FCRIT < F(df1,df2,noncen)) using one of four
@@ -47,10 +49,10 @@ def probf(fcrit, df1, df2, noncen):
 def _normal_approximation(zscore):
     """Normal approximation, value dependent on zscore"""
     if math.fabs(zscore) < 6:
-        fmethod = 3
+        fmethod = Constants.FMETHOD_NORMAL_SM
         prob = norm.cdf(zscore)
     else:
-        fmethod = 4
+        fmethod = Constants.FMETHOD_NORMAL_LR
         if zscore < -6:
             prob = 0
         elif zscore > 6:
@@ -82,12 +84,12 @@ def _tiku_approximation(df1, df2, fcrit, noncen):
     b_tiku = - df2 / (df2 - 2) * (c_tiku - 1 - noncen / df1)
     fcrit_tiku = (fcrit - b_tiku) / c_tiku
     prob = special.ncfdtr(df1_tiku, df2, 0, fcrit_tiku)
-    fmethod = 2
+    fmethod = Constants.FMETHOD_TIKU
     return prob, fmethod
 
 
 def _nonadjusted(df1, df2, fcrit, noncen):
     """CDF function (no approximation)"""
     prob = special.ncfdtr(df1, df2, noncen, fcrit)
-    fmethod = 1
+    fmethod = Constants.FMETHOD_NOAPPROXIMATION
     return prob, fmethod
