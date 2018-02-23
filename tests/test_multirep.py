@@ -2,6 +2,7 @@ from unittest import TestCase
 import numpy as np
 from glmpowercalc.multirep import hlt, pbt, wlk, special
 from glmpowercalc.constants import Constants
+from glmpowercalc.input import Scalar, CL
 
 class TestMultirep(TestCase):
 
@@ -10,13 +11,13 @@ class TestMultirep(TestCase):
         This should return the expected value
         """
 
-        expected   = (np.array([0.52768]), np.array([0.69772]), np.array([0.86495]))
+        expected = (np.array([0.05421]), np.array([0.10994]), np.array([0.2395]))
         eval_HINVE = np.array([0.6])
-        CL= CL()
-        result     = hlt(2, 1, 2, 5, eval_HINVE, Constants.MULTI_HLT_MCKEON_OS, CL, Scalar)
-        actual = (np.round(result[0], 5),
-                  np.round(result[1], 5),
-                  np.round(result[2], 5))
+        cl = CL(cl_desire=True, sigma_type=True, n_est=5, rank_est=2)
+        result = hlt(2, 1, 2, 5, eval_HINVE, Constants.MULTI_HLT_MCKEON_OS, cl, Scalar())
+        actual = (np.round(result['lower'], 5),
+                  np.round(result['power'], 5),
+                  np.round(result['upper'], 4))
         self.assertEqual(expected, actual)
 
     def test_pbt(self):
@@ -24,13 +25,13 @@ class TestMultirep(TestCase):
         This should return the expected value
         """
 
-        expected = (np.array([0.52768]), np.array([0.69772]), np.array([0.86495]))
+        expected = (np.array([0.05421]), np.array([0.10994]), np.array([0.2395]))
         eval_HINVE=np.array([0.6])
-        result = pbt(2, 1, 2, 5, eval_HINVE, Constants.MULTI_PBT_MULLER,
-                     0.048)
-        actual = (np.round(result[0], 5),
-                  np.round(result[1], 5),
-                  np.round(result[2], 5))
+        cl = CL(cl_desire=True, sigma_type=True, n_est=5, rank_est=2)
+        result = pbt(2, 1, 2, 5, eval_HINVE, Constants.MULTI_PBT_MULLER, cl, Scalar())
+        actual = (np.round(result['lower'], 5),
+                  np.round(result['power'], 5),
+                  np.round(result['upper'], 4))
         self.assertEqual(expected, actual)
 
     def test_wlk(self):
@@ -38,13 +39,13 @@ class TestMultirep(TestCase):
         This should return the expected value
         """
 
-        expected = (0.52768, 0.69772, 0.86495)
+        expected = (np.array([0.05421]), np.array([0.10994]), np.array([0.2395]))
         eval_HINVE = np.array([0.6])
-        result = wlk(2, 1, 2, 5, eval_HINVE, Constants.MULTI_WLK_RAO,
-                     0.0001)
-        actual = (np.round(result[0], 5),
-                  np.round(result[1], 5),
-                  np.round(result[2], 5))
+        cl = CL(cl_desire=True, sigma_type=True, n_est=5, rank_est=2)
+        result = wlk(2, 1, 2, 5, eval_HINVE, Constants.MULTI_WLK_RAO, cl, Scalar())
+        actual = (np.round(result['lower'], 5),
+                  np.round(result['power'], 5),
+                  np.round(result['upper'], 4))
         self.assertEqual(expected, actual)
 
 
@@ -53,10 +54,11 @@ class TestMultirep(TestCase):
         This should return the expected value
         """
 
-        expected = (0.52768, 0.69772, 0.86495)
+        expected = (np.array([0.05421]), np.array([0.10994]), np.array([0.2395]))
         eval_HINVE = np.array([0.6])
-        result = special(2, 1, 2, 5, eval_HINVE)
-        actual = (np.round(result[0], 5),
-                  np.round(result[1], 5),
-                  np.round(result[2], 5))
+        cl = CL(cl_desire=True, sigma_type=True, n_est=5, rank_est=2)
+        result = special(2, 1, 2, 5, eval_HINVE, cl, Scalar())
+        actual = (np.round(result['lower'], 5),
+                  np.round(result['power'], 5),
+                  np.round(result['upper'], 4))
         self.assertEqual(expected, actual)
