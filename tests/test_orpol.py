@@ -7,6 +7,7 @@ class TestOrpol(TestCase):
     def test_orpol1(self):
         """
         This should return the expected value
+        test case is from Emerson 1968 article, and the expected value is from SAS/IML output
         """
         expected = [[0.25, -0.472456, 0.433013, -0.163663],
                     [0.25, -0.094491, -0.144338, 0.272772],
@@ -16,8 +17,9 @@ class TestOrpol(TestCase):
         result = np.round(actual, 6)
         self.assertTrue((expected == result).all)
 
-    def test_orpol1(self):
+    def test_orpol2(self):
         """
+        Test for maxdegree < n
         This should return the expected value
         """
         expected = [[0.25, -0.472456, 0.433013],
@@ -30,6 +32,7 @@ class TestOrpol(TestCase):
 
     def test_orpol_none_maxdegree(self):
         """
+        Test for maxdegree not specify
         This should return the expected value
         """
         expected = [[0.25, -0.472456, 0.433013, -0.163663],
