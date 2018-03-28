@@ -1,5 +1,41 @@
 import numpy as np
+from functools import reduce
+import copy
+import itertools
 
+def uploy(factor_list):
+    """
+    This module creates a U contrast matrix with orthogonal polynomial coding for within subject factors.
+
+    :param factor_list:list of levels of factors
+    :return: U contrast matrix
+    """
+
+    n_factor = len(factor_list)
+    center_factor_list = list(map((lambda x: np.matrix(orpol((x-np.mean(x))/(np.sqrt(np.dot(x-np.mean(x), x-np.mean(x))))))), factor_list))
+    zerotrend_list = list(map((lambda x: x[:, 0]), center_factor_list))
+    highertrend_list = list(map((lambda x: x[:, 1:]), center_factor_list))
+
+    u_grandmean = reduce((lambda x, y: np.kron(x, y)), zerotrend_list)
+
+
+    u_maineffect = []
+    for i in range(0, n_factor):
+        temp_trend_list = copy.deepcopy(zerotrend_list)
+        temp_trend_list[i] = highertrend_list[i]
+        u_maineffect.append(reduce((lambda x, y: np.kron(x, y)), temp_trend_list))
+
+    if n_factor > 1:
+        u_twoways = []
+        for k in itertools.combinations(range(0, n_factor), 2):
+            temp_trend_list = copy.deepcopy(zerotrend_list)
+            temp_trend_list[k[0]] = highertrend_list[k[0]]
+            temp_trend_list[k[1]] = highertrend_list[k[1]]
+            u_twoways.append(reduce((lambda x, y: np.kron(x, y)), temp_trend_list))
+
+        return u_grandmean, u_maineffect, u_twoways
+
+    return u_grandmean, u_maineffect
 
 def orpol(x, maxdegree=None, weights=None):
     """
@@ -40,3 +76,11 @@ def orpol(x, maxdegree=None, weights=None):
         qx = np.multiply(x-B, orth_ploy[j+1, ]) - A * orth_ploy[j, ]
 
     return orth_ploy[1:, ].T
+
+
+def test():
+    print(uploy([[1,2,3], [1,2,3]]))
+
+
+if __name__ == '__main__':
+    test()

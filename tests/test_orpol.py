@@ -42,3 +42,13 @@ class TestOrpol(TestCase):
         actual = orpol(x=[0, 2, 3, 5], weights=[2, 6, 6, 2])
         result = np.round(actual, 6)
         self.assertTrue((expected == result).all)
+
+
+    def test_uploy_onefactor(self):
+        """
+
+        :return:
+        """
+        expected = None
+        actual = orpol([[1,2,3]])
+        self.assertTrue()
