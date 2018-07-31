@@ -2,6 +2,15 @@ from glmpowercalc.constants import Constants
 
 class Scalar:
     def __init__(self, alpha=0.05, rep_n=1, beta_scalar=1, rho_scalar=1, sigma_scalar=1, tolerance=1e-12):
+        """
+
+        :param alpha: type one error???
+        :param rep_n: number of repeats???
+        :param beta_scalar: BETASCAL, (vector), multipliers of BETA. Default of {1}.
+        :param rho_scalar: RHOSCAL, (vector), multipliers of RHO (correlation matrix computed internally from SIGMA). Default of {1}.
+        :param sigma_scalar: SIGSCAL, (vector), multipliers of SIGMA. Default of {1}.
+        :param tolerance: any number with modulus smaller than this is considered 0
+        """
         self.alpha = alpha
         self.rep_n = rep_n
         self.beta_scalar = beta_scalar
@@ -24,6 +33,7 @@ class CL:
 
         :return cl_type: CLTYPE_DESIRED_ESTIMATE, CLTYPE_DESIRED_KNOWN, CLTYPE_NOT_DESIRED
         """
+        self.sigma_type = sigma_type
         self.sigma_type = sigma_type
 
         if cl_desire:  # sigma is desired

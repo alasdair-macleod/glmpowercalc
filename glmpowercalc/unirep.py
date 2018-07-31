@@ -80,9 +80,10 @@ def hfexeps(sigma_star, rank_U, total_N, rank_X, UnirepUncorrected):
     fk = (derh1 - h1 * derh2 / h2) / (rank_U * h2)
     der2h1 = np.full((d, 1), 2 * total_N - 4)
     der2h2 = np.full((d, 1), 2 * (total_N - rank_X) - 2)
-    fkk = (np.multiply(-derh1, derh2) / h2 + der2h1 - np.multiply(derh1, derh2) / h2 + 2 * h1 * np.power(derh2,
-                                                                                                         2) / h2 ** 2 - h1 * der2h2 / h2) / (
-          h2 * rank_U)
+    fkk = (  np.multiply(-derh1, derh2) / h2
+           + der2h1 - np.multiply(derh1, derh2) / h2
+           + 2 * h1 * np.power(derh2,2) / h2 ** 2
+           - h1 * der2h2 / h2) / (h2 * rank_U)
     t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
     sum1 = np.sum(t1)
 
@@ -180,7 +181,8 @@ def ggexeps(sigma_star, rank_U, total_N, rank_X, UnirepHuynhFeldt):
     c0 = 1 - slam1 / slam2
     c1 = -4 * slam3 / slam2
     c2 = 4 * slam1 / slam2 ** 2
-    fkk = 2 * (c0 * np.full((d, 1), 1) + c1 * deigval + c2 * np.power(deigval, 2)) / (rank_U * slam2)
+    fkk = 2 * (c0 * np.full((d, 1), 1)
+               + c1 * deigval + c2 * np.power(deigval, 2)) / (rank_U * slam2)
     t1 = np.multiply(np.multiply(fkk, np.power(deigval, 2)), mtp)
     sum1 = np.sum(t1)
 
