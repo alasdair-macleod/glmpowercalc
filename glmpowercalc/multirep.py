@@ -47,10 +47,10 @@ def hlt(rank_C, rank_U, rank_X, total_N, eval_HINVE, MultiHLT, CL, Scalar):
     else:
         if (MultiHLT == Constants.MULTI_HLT_PILLAI_OS or
                 MultiHLT == Constants.MULTI_HLT_MCKEON_OS) or min_rank_C_U == 1:
-            hlt = eval_HINVE * (total_N - rank_X) / total_N
+            hlt = np.sum(eval_HINVE * (total_N - rank_X) / total_N)
             omega = (total_N * min_rank_C_U) * (hlt / min_rank_C_U)
         else:
-            hlt = eval_HINVE
+            hlt = np.sum(eval_HINVE)
             omega = df2 * (hlt / min_rank_C_U)
 
         power, fmethod = multi_power(Scalar.alpha, df1, df2, omega)
