@@ -27,3 +27,33 @@ class TestPower(TestCase):
         actual_gg = actual.gg_power
         actual_box = actual.box_power
         self.assertAlmostEqual(expected, actual_hlt['power'], places=6)
+
+
+    def test_tworepeatedmeasure(self):
+        expected = 0.05
+        c_matrix = np.matrix([[1]])
+        beta = np.matrix([[1, 1, 1, 1, 1, 1]])
+        sigma = np.kron(np.matrix([[1, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 1]]), np.matrix([[1, 0],
+                                                   [0, 1]]))
+        essencex = np.matrix([[1]])
+        u_matrix = np.matrix([[ 1, 1],
+[-1, 0],
+[ 0,-1],
+[ 1, 1],
+[-1, 0],
+[ 0,-1]])
+        theta_zero = np.zeros((np.shape(c_matrix)[0], np.shape(u_matrix)[1]))
+
+        actual = power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, Scalar(rep_n=66), CalcMethod(), Option(), CL(), IP())
+        actual_special = actual.special_power
+        actual_hlt = actual.hlt_power
+        actual_pbt = actual.pbt_power
+        actual_wlk = actual.wlk_power
+        actual_un = actual.un_power
+        actual_hf = actual.hf_power
+        actual_cm = actual.cm_power
+        actual_gg = actual.gg_power
+        actual_box = actual.box_power
+        self.assertAlmostEqual(expected, actual_hlt['power'], places=6)
