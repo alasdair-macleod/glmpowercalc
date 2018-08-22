@@ -8,7 +8,7 @@ from glmpowercalc.input import Scalar, CalcMethod, Option, CL, IP
 
 class TestPower(TestCase):
     def test_Power(self):
-        expected = 0.761158
+        expected = 0.514
         c_matrix = np.matrix([[1]])
         beta = np.matrix([[1]])
         sigma = np.matrix([[2]])
@@ -26,4 +26,4 @@ class TestPower(TestCase):
         actual_cm = actual.cm_power
         actual_gg = actual.gg_power
         actual_box = actual.box_power
-        self.assertAlmostEqual(expected, actual_hlt['power'], places=6)
+        self.assertAlmostEqual(expected, actual_hlt['power'], places=3)
