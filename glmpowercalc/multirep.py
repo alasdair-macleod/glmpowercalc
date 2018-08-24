@@ -160,9 +160,9 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, MultiWLK, CL, Scalar):
         warnings.warn('PowerWarn15: Power is missing because because the noncentrality could not be computed.')
     else:
         if MultiWLK == Constants.MULTI_WLK_RAO or MultiWLK == Constants.MULTI_WLK_RAO_OS or min_rank_C_U == 1:
-            w = np.exp(np.sum(-np.log(np.ones((min_rank_C_U, 1)) + eval_HINVE * (total_N - rank_X)/total_N)))
+            w = np.exp(np.sum(-np.log(np.ones((1, min_rank_C_U)) + eval_HINVE * (total_N - rank_X)/total_N)))
         else:
-            w = np.exp(np.sum(-np.log(np.ones((min_rank_C_U, 1)) + eval_HINVE)))
+            w = np.exp(np.sum(-np.log(np.ones((1, min_rank_C_U)) + eval_HINVE)))
 
     if min_rank_C_U == 1:
         df2 = total_N - rank_X -rank_U + 1
@@ -170,8 +170,8 @@ def wlk(rank_C, rank_U, rank_X, total_N, eval_HINVE, MultiWLK, CL, Scalar):
         tempw = w
     else:
         rm = total_N - rank_X - (rank_U - rank_C + 1)/2
-        rs = np.sqrt(rank_C*rank_C*rank_U*rank_U - 4) / (rank_C*rank_C + rank_U*rank_U - 5)
-        r1 = (rank_U - rank_C - 2)/4
+        rs = np.sqrt((rank_C*rank_C*rank_U*rank_U - 4) / (rank_C*rank_C + rank_U*rank_U - 5))
+        r1 = (rank_U * rank_C - 2)/4
         if np.isnan(w):
             tempw = float('nan')
         else:
