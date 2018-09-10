@@ -311,7 +311,7 @@ def power(essencex, beta, c_matrix, u_matrix, sigma, theta_zero, Scalar, CalcMet
             slam3 = float('nan')
             cancorrmax = float('nan')
         else:
-            inverse_error_sum = np.linalg.inv(np.linalg.cholesky(error_sum_square)).T
+            inverse_error_sum = np.linalg.inv(np.linalg.cholesky(error_sum_square))
             hei_orth = inverse_error_sum * hypo_sum_square * inverse_error_sum.T
             hei_orth_symm = (hei_orth + hei_orth.T) / 2
             eval = np.linalg.eigvals(hei_orth_symm)[0:min_rank_c_u]
